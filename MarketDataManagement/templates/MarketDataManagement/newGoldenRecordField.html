@@ -1,0 +1,13 @@
+<div id="goldenrecordfield-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Golden Record Field</label></h3>
+		<form action="{% url 'MarketDataManagement:manageMapping'%}" method="post">
+		    {% csrf_token %}
+		    {{ goldenrecordfieldForm.as_p }}
+		    <br /> 
+		    <input name="newGoldenRecordField" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='goldenrecord_overlayClick()'>close</a>
+	<p>*please do not forget to update the database tables/application models if you have not made this already</p>
+	</div>
+</div>

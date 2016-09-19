@@ -1,0 +1,13 @@
+<div id="datasourcefield-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Datasource field</label></h3>
+		<form action="{% url 'MarketDataManagement:manageMapping'%}" method="post">
+		    {% csrf_token %}
+		    {{ datasourcefieldForm.as_p }}
+		    <br /> 
+		    <input name="newDatasourceField" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='datasource_overlayClick()'>close</a>
+	<p>*please do not forget to update the database tables/application models if you have not made this already</p>
+	</div>
+</div>

@@ -1,0 +1,12 @@
+<div id="market-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Market</label></h3>
+		<form action="{% url 'InstrumentDataManagement:newInstrument'%}" method="post">
+		    {% csrf_token %}
+		    {{ marketForm.as_p }}
+		    <br /> 
+		    <input name="newMarket" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='market_overlayClick()'>close</a>
+	</div>
+</div>

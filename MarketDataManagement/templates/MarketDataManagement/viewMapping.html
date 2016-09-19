@@ -1,0 +1,17 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% include 'MarketDataManagement/includes.html' %}
+	{% include 'MarketDataManagement/newDatasourceField.html' %}	
+	{% include 'MarketDataManagement/newGoldenRecordField.html' %}
+	{% include 'MarketDataManagement/addMapping.html' %}
+	
+	{% for mapping in field_mapping %}
+		<p>{{ mapping }}</p>
+	{% endfor %}
+	
+	<a href="#" onclick='fieldmapping_overlayClick()'>New Mapping</a>
+	<br />
+	<a href="#" onclick='goldenrecord_overlayClick()'>New golden record field</a>
+	<br />
+	<a href="#" onclick='datasource_overlayClick()'>New data source field</a>
+{% endblock %}

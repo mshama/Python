@@ -1,0 +1,12 @@
+<div id="fieldMapping-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Field Mapping</label></h3>
+		<form action="{% url 'MarketDataManagement:manageMapping'%}" method="post">
+		    {% csrf_token %}
+		    {{ fieldMappingForm.as_p }}
+		    <br /> 
+		    <input name="newFieldMapping" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='fieldmapping_overlayClick()'>close</a>
+	</div>
+</div>

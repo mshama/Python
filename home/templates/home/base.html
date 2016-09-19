@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<head>
+	{% load staticfiles %}
+	
+	<link rel="stylesheet" type="text/css" href="{% static 'home/css/style.css' %}" />
+	<link rel="shortcut icon" type="image/png" href="{% static 'home/images/favicon.ico' %}"/>
+	<title>Quant Capital</title>
+</head>
+
+<body>
+	<h3>
+    	<img src="{% static 'home/images/qc_logo.png' %}" alt="Quant Capital Management" height="80px" width="300px"/>
+	</h3>
+	
+	<table style="width:100%">
+		<tr>
+			<td style="width:10%;vertical-align:top;">
+				<ul>
+					<li><a class="active" href="{% url 'home:index' %}">Home</a></li>
+					<li class="dropdown">
+						<a href="#news">Reporting</a>
+						<div class="dropdown-content">
+							<ul class="dropdown-menu-list">
+								<li class="dropdown-menu">
+									<a href="#">Monthly Report</a>
+									<div class="dropdown-submenu-content">
+										<ul class="dropdown-submenu-list">
+											<li><a href="#">QELV</a></li>
+											<li><a href="#">Report 2</a></li>
+										</ul>
+									</div>
+								</li>
+								<li class="dropdown-menu">
+									<a href="#">Daily Report</a>
+									<div class="dropdown-submenu-content">
+										<ul class="dropdown-submenu-list">
+											<li><a href="#">Report 1</a></li>
+											<li><a href="#">Report 2</a></li>
+										</ul>
+									</div>
+								</li>					
+							</ul>
+						</div>
+					</li>
+					<li class="dropdown">
+						<a href="#">Instrument Management</a>
+						<div class="dropdown-content">
+							<ul class="dropdown-menu-list">
+								<li class="dropdown-menu">
+									<a href="{% url 'InstrumentDataManagement:newInstrument' %}">New instrument</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="#">View Instruments</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="#">Update data</a>						
+								</li>					
+							</ul>
+						</div>
+					</li>
+					<li class="dropdown">
+						<a href="#">Market data Management</a>
+						<div class="dropdown-content">
+							<ul class="dropdown-menu-list">
+								<li class="dropdown-menu">
+									<a href="{% url 'MarketDataManagement:manageMapping'%}">View active mapping</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="{% url 'MarketDataManagement:manageMapping'%}">View all mapping</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="#">Update data</a>						
+								</li>					
+							</ul>
+						</div>
+					</li>
+					<li><a href="#contact">Contact</a></li>
+					<li><a href="#about">About</a></li>
+				</ul>
+			</td>
+			<td style="width:90%;text-align: center;vertical-align:top;">
+				{% block body_block %}
+				{% endblock %}
+			</td>
+		</tr>
+	</table>
+</body>

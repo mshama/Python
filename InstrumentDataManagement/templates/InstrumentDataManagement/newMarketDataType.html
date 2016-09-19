@@ -1,0 +1,12 @@
+<div id="marketdatatype-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Market Data Type:</label></h3>
+		<form action="{% url 'InstrumentDataManagement:newInstrument'%}" method="post">
+		    {% csrf_token %}
+		    {{ marketDataTypeForm.as_p }}
+		    <br /> 
+		    <input name="newMarketDataType" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='marketdatatype_overlayClick()'>close</a>
+	</div>
+</div>
