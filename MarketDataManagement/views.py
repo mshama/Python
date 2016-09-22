@@ -14,17 +14,20 @@ from .models import MarketDataField_Mapping
 
 # form imports
 from .forms import newFieldMappingForm
+from InstrumentDataManagement.forms import newMarketDataTypeForm
 
 # Create your views here.
 def manageMapping(request, condition=''):
     if request.method == 'GET':
         if condition == 'active':
-            marketdatafield_mapping = MarketDataField_Mapping.objects.exclude(vaild_to__isnull=True)
+            marketdatafield_mapping = MarketDataField_Mapping.objects.exclude(valid_to__isnull=False)
         else:
             marketdatafield_mapping = MarketDataField_Mapping.objects.all()
         fieldMappingForm = newFieldMappingForm()
+        marketDataTypeForm = newMarketDataTypeForm()
         context = {
                    'field_mapping': marketdatafield_mapping,
                    'fieldMappingForm': fieldMappingForm,
+                   'marketDataTypeForm': marketDataTypeForm,
         }
         return render(request, 'MarketDataManagement/viewMapping.html', context)

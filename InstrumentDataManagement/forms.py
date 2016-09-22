@@ -54,11 +54,22 @@ class newCurrencyForm(forms.ModelForm):
             'denomination_c': _('Denomination:'),
         }
 
+class newCountryForm(forms.ModelForm):
+    class Meta:
+        model = Country
+        fields = ('isocode_c', 'name_c', 'denomination_c')
+        labels = {
+            'isocode_c': _('ISO Code:'),
+            'name_c': _('Name:'),
+            'denomination_c': _('Denomination:'),
+        }
+
 class newInstrumentForm(forms.Form):
     codification = forms.ModelChoiceField(label='Code type:', queryset=Codification.objects.all())
     market = forms.ModelChoiceField(label='Market:', queryset=Market.objects.all())
     marketdatatype = forms.ModelChoiceField(label='Market Data Type:', queryset=Marketdatatype.objects.all())
     currency = forms.ModelChoiceField(label='Currency:', queryset=Currency.objects.all())
-    undercurrency = forms.ModelChoiceField(label='Currency:', queryset=Currency.objects.all())
+    undercurrency = forms.ModelChoiceField(label='Underlying Currency:', queryset=Currency.objects.all())
     country = forms.ModelChoiceField(label='Country:', queryset=Country.objects.all())
+    risk_country = forms.ModelChoiceField(label='Risk Country:', queryset=Country.objects.all())
     names = forms.CharField(label='Instruments:', widget=forms.Textarea)

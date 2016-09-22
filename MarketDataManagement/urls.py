@@ -11,4 +11,5 @@ app_name = 'MarketDataManagement'
 
 urlpatterns = [
     url(r'^viewMapping/$', views.manageMapping, name='manageMapping'),
+    url(r'^viewMapping/(active)/$', views.manageMapping, name='manageMapping'),
 ]

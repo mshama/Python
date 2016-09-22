@@ -11,10 +11,28 @@ from _datetime import datetime
 
 from .models import MarketDataField_Mapping,GoldenRecordField,DatasourceField,Marketdatatype
 
+
+class newGoldenRecordFieldForm(forms.ModelForm):
+    class Meta:
+        model = GoldenRecordField
+        fields = ('name_c',)
+        labels = {
+            'name_c': _('Field Name:'),
+        }
+
+class newDatasourceFieldForm(forms.ModelForm):
+    class Meta:
+        model = DatasourceField
+        fields = ('name_c','data_source_c',)
+        labels = {
+            'name_c': _('Field Name:'),
+            'data_source_c': _('Datasource:'),
+        }
+
 class newFieldMappingForm(forms.ModelForm):
     class Meta:
         model = MarketDataField_Mapping
-        fields = ('goldenrecord_field', 'datasource_field', 'marketdatatype', 'valid_from', 'valid_to')
+        fields = ('goldenrecord_field', 'datasource_field', 'marketdatatype', 'valid_from', 'valid_to',)
         labels = {
             'iso_code_c': _('ISO Code:'),
             'name_c': _('Name:'),

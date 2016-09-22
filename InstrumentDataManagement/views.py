@@ -16,6 +16,7 @@ from dataconnections.datasource import get_metaData, get_PriceData
 
 # forms import
 from .forms import newMarketDataTypeForm,newMarketForm,newInstrumentForm
+from InstrumentDataManagement.forms import newCurrencyForm, newCountryForm
 
 # Create your views here.
 
@@ -31,15 +32,23 @@ def newInstrument(request):
             newMarketDataType(request)
         elif 'newMarket' in request.POST:
             newMarket(request)
+        elif 'newCountry' in request.POST:
+            newCountry(request)
+        elif 'newCurrency' in request.POST:
+            newCurrency(request)
     instrumentForm = newInstrumentForm()
     marketDataTypeForm = newMarketDataTypeForm()
     marketForm = newMarketForm()
+    countryForm = newCountryForm()
+    currencyForm = newCurrencyForm()
     
     context = {
                'message': 'this is the data management home',
                'instrumentForm': instrumentForm,
                'marketDataTypeForm': marketDataTypeForm,
                'marketForm': marketForm,
+               'countryForm': countryForm,
+               'currencyForm': currencyForm,
                }
     return render(request, 'InstrumentDataManagement/newInstrument.html', context)
 
@@ -50,6 +59,16 @@ def newMarketDataType(request):
         
 def newMarket(request):
         form = newMarketForm(request.POST)
+        if not form.save():
+            return False
+        
+def newCountry(request):
+        form = newCountryForm(request.POST)
+        if not form.save():
+            return False
+
+def newCurrency(request):
+        form = newCurrencyForm(request.POST)
         if not form.save():
             return False
     

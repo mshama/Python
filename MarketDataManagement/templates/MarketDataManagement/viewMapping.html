@@ -3,15 +3,33 @@
 	{% include 'MarketDataManagement/includes.html' %}
 	{% include 'MarketDataManagement/newDatasourceField.html' %}	
 	{% include 'MarketDataManagement/newGoldenRecordField.html' %}
+	{% include 'MarketDataManagement/newMarketDataType.html' %}
 	{% include 'MarketDataManagement/addMapping.html' %}
 	
-	{% for mapping in field_mapping %}
-		<p>{{ mapping }}</p>
-	{% endfor %}
+	<table style="width: 80%;margin-left: auto;margin-right: auto;text-align:left">
+		<tr>
+			<th>Golden record field</th>
+			<th>Datasource field</th>
+			<th>Market data type</th>
+			<th>Valid from</th>
+			<th>Valid to</th>
+		</tr>
+		{% for mapping in field_mapping %}
+		<tr>
+			<td>{{ mapping.goldenrecord_field.name_c }}</td>
+			<td>{{ mapping.datasource_field.name_c }}</td>
+			<td>{{ mapping.marketdatatype.name_c }}</td>
+			<td>{{ mapping.valid_from }}</td>
+			<td>{{ mapping.valid_to }}</td>
+		</tr>
+		{% endfor %}
+	</table>
 	
-	<a href="#" onclick='fieldmapping_overlayClick()'>New Mapping</a>
+	<a href="#" onclick='overlayClick("fieldMapping-overlay")'>New Mapping</a>
 	<br />
-	<a href="#" onclick='goldenrecord_overlayClick()'>New golden record field</a>
+	<a href="#" onclick='overlayClick("goldenrecordfield-overlay")'>New golden record field</a>
 	<br />
-	<a href="#" onclick='datasource_overlayClick()'>New data source field</a>
+	<a href="#" onclick='overlayClick("datasourcefield-overlay")'>New data source field</a>
+	<br />
+	<a href="#" onclick='overlayClick("marketdatatype-overlay")'>New market data type</a>
 {% endblock %}
