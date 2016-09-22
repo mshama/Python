@@ -1,0 +1,12 @@
+<div id="country-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Country:</label></h3>
+		<form action="{% url 'InstrumentDataManagement:newInstrument'%}" method="post">
+		    {% csrf_token %}
+		    {{ countryForm.as_p }}
+		    <br /> 
+		    <input name="newCountryType" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='overlayClick("country-overlay")'>close</a>
+	</div>
+</div>

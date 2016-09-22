@@ -1,0 +1,12 @@
+<div id="currency-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New currency:</label></h3>
+		<form action="{% url 'InstrumentDataManagement:newInstrument'%}" method="post">
+		    {% csrf_token %}
+		    {{ currencyForm.as_p }}
+		    <br /> 
+		    <input name="newCurrencyType" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='overlayClick("currency-overlay")'>close</a>
+	</div>
+</div>
