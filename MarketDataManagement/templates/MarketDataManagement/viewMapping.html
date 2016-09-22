@@ -6,7 +6,7 @@
 	{% include 'MarketDataManagement/newMarketDataType.html' %}
 	{% include 'MarketDataManagement/addMapping.html' %}
 	
-	<table style="width: 80%;margin-left: auto;margin-right: auto;text-align:left">
+	<table style="width: 90%;margin-left: auto;margin-right: auto;text-align:left" id="mappings-table">
 		<tr>
 			<th>Golden record field</th>
 			<th>Datasource field</th>
@@ -20,11 +20,21 @@
 			<td>{{ mapping.datasource_field.name_c }}</td>
 			<td>{{ mapping.marketdatatype.name_c }}</td>
 			<td>{{ mapping.valid_from }}</td>
-			<td>{{ mapping.valid_to }}</td>
+			<td>{{ mapping.valid_to|default_if_none:"" }}</td>
 		</tr>
 		{% endfor %}
 	</table>
 	
+	<script language="javascript" type="text/javascript">
+		var filter_config = 	{
+				paging: true,
+				paging_length: 10,
+				rows_counter: true,
+				btn_reset: true,
+			};
+		setFilterGrid("mappings-table",filter_config);
+	</script>
+	<br />
 	<a href="#" onclick='overlayClick("fieldMapping-overlay")'>New Mapping</a>
 	<br />
 	<a href="#" onclick='overlayClick("goldenrecordfield-overlay")'>New golden record field</a>

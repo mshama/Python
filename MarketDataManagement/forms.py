@@ -51,4 +51,4 @@ class newFieldMappingForm(forms.ModelForm):
     datasource_field = forms.ModelChoiceField(queryset=DatasourceField.objects.all())
     marketdatatype = forms.ModelChoiceField(queryset=Marketdatatype.objects.all())
     valid_from = forms.DateField(initial=datetime.now().date(), widget=forms.TextInput(attrs={ 'required': 'true' }),)
-    valid_to = forms.DateField(initial=datetime.now().date())
+    valid_to = forms.DateField(initial=datetime.now().date(), required=False)
