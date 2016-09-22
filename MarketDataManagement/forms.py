@@ -19,6 +19,9 @@ class newGoldenRecordFieldForm(forms.ModelForm):
         labels = {
             'name_c': _('Field Name:'),
         }
+        widgets = {
+            'name_c': forms.TextInput(attrs={ 'required': 'true' }),
+        }
 
 class newDatasourceFieldForm(forms.ModelForm):
     class Meta:
@@ -28,6 +31,11 @@ class newDatasourceFieldForm(forms.ModelForm):
             'name_c': _('Field Name:'),
             'data_source_c': _('Datasource:'),
         }
+        widgets = {
+            'name_c': forms.TextInput(attrs={ 'required': 'true' }),
+            'data_source_c': forms.Select(choices = ([('DS','DataStream'), ('BBG','Bloomberg'), ]))
+        }
+        
 
 class newFieldMappingForm(forms.ModelForm):
     class Meta:
@@ -42,5 +50,5 @@ class newFieldMappingForm(forms.ModelForm):
     goldenrecord_field = forms.ModelChoiceField(queryset=GoldenRecordField.objects.all())
     datasource_field = forms.ModelChoiceField(queryset=DatasourceField.objects.all())
     marketdatatype = forms.ModelChoiceField(queryset=Marketdatatype.objects.all())
-    valid_from = forms.DateField(initial=datetime.now().date())
+    valid_from = forms.DateField(initial=datetime.now().date(), widget=forms.TextInput(attrs={ 'required': 'true' }),)
     valid_to = forms.DateField(initial=datetime.now().date())

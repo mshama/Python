@@ -14,6 +14,7 @@ class newMarketDataTypeForm(forms.ModelForm):
         model = Marketdatatype
         fields = ('name_c', 'type_c')
         widgets = {
+            'name_c': forms.TextInput(attrs={ 'required': 'true' }),
             'type_c': forms.Select(choices = ([('Stock','Stock'), ('Bond','Bond'),('Derivative','Derivative'), ('InterestRate','InterestRate'), ]))
         }
         labels = {
@@ -30,10 +31,14 @@ class newMarketForm(forms.ModelForm):
             'name_c': _('Name:'),
             'denomination_c': _('Denomination:'),
         }
+        widgets = {
+            'iso_code_c': forms.TextInput(attrs={ 'required': 'true' }),
+            'name_c': forms.TextInput(attrs={ 'required': 'true' }),
+        }
         
 class codificationForm(forms.Form):
     codification = forms.ModelChoiceField(label='Code type:', queryset=Codification.objects.all())
-    code = forms.CharField(label='Code:')
+    code = forms.CharField(label='Code:', widget=forms.TextInput(attrs={ 'required': 'true' }),)
     
 class newCodificationForm(forms.ModelForm):
     class Meta:
@@ -42,6 +47,9 @@ class newCodificationForm(forms.ModelForm):
         labels = {
             'name_c': _('Name:'),
             'denomination_c': _('Denomination:'),
+        }
+        widgets = {
+            'name_c': forms.TextInput(attrs={ 'required': 'true' }),
         }
 
 class newCurrencyForm(forms.ModelForm):
@@ -53,6 +61,10 @@ class newCurrencyForm(forms.ModelForm):
             'name_c': _('Name:'),
             'denomination_c': _('Denomination:'),
         }
+        widgets = {
+            'isocode_c': forms.TextInput(attrs={ 'required': 'true' }),
+            'name_c': forms.TextInput(attrs={ 'required': 'true' }),
+        }
 
 class newCountryForm(forms.ModelForm):
     class Meta:
@@ -62,6 +74,10 @@ class newCountryForm(forms.ModelForm):
             'isocode_c': _('ISO Code:'),
             'name_c': _('Name:'),
             'denomination_c': _('Denomination:'),
+        }
+        widgets = {
+            'isocode_c': forms.TextInput(attrs={ 'required': 'true' }),
+            'name_c': forms.TextInput(attrs={ 'required': 'true' }),
         }
 
 class newInstrumentForm(forms.Form):

@@ -15,6 +15,8 @@ from .models import MarketDataField_Mapping
 # form imports
 from .forms import newFieldMappingForm
 from InstrumentDataManagement.forms import newMarketDataTypeForm
+from MarketDataManagement.forms import newGoldenRecordFieldForm,\
+    newDatasourceFieldForm
 
 # Create your views here.
 def manageMapping(request, condition=''):
@@ -25,9 +27,13 @@ def manageMapping(request, condition=''):
             marketdatafield_mapping = MarketDataField_Mapping.objects.all()
         fieldMappingForm = newFieldMappingForm()
         marketDataTypeForm = newMarketDataTypeForm()
+        goldenrecordfieldForm = newGoldenRecordFieldForm()
+        datasourcefieldForm = newDatasourceFieldForm()
         context = {
                    'field_mapping': marketdatafield_mapping,
                    'fieldMappingForm': fieldMappingForm,
                    'marketDataTypeForm': marketDataTypeForm,
+                   'goldenrecordfieldForm': goldenrecordfieldForm,
+                   'datasourcefieldForm': datasourcefieldForm,
         }
         return render(request, 'MarketDataManagement/viewMapping.html', context)
