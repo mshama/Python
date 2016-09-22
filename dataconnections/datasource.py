@@ -16,9 +16,8 @@ def get_metaData(instrument, datasource):
         instrumentFieldList = ['ISIN','NAME','MNEM','FLOT']
         DWE = create_DataStreamConnection()
         instrumentData = DWE.fetch(instrument, instrumentFieldList, static=True)
-        bbName = instrumentData['MNEM'][0]
-        shortName = instrumentData['MNEM'][0]
-        description = instrumentData['NAME'][0]
+        ticker = instrumentData['MNEM'][0]
+        name = instrumentData['NAME'][0]
         ISIN = instrumentData['ISIN'][0]
         try:
             vBPV = str(instrumentData['FLOT'][0])
@@ -26,10 +25,9 @@ def get_metaData(instrument, datasource):
                 vBPV = 0
         except Exception as e:
             vBPV = 0;
-        return {'bbname':bbName,'shortname':shortName,'description':description,'ISIN':ISIN,'BPV':vBPV}
+        return {'ticker':ticker,'name':name,'ISIN':ISIN,'BPV':vBPV}
     elif(datasource == 'BBG'):
-        print("note yet implemented")
-        return
+        return {'ticker':instrument,'name':instrument,'ISIN':instrument+'_ISIN','BPV':None}
     
 def get_PriceData(datasource, instrument, fields, lastPriceDate='2000-01-01'):
     lastPriceDate =  datetime.strptime(lastPriceDate, '%Y-%m-%d') - timedelta(days=5)

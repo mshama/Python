@@ -12,4 +12,5 @@ app_name = 'InstrumentDataManagement'
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^newInstrument/$', views.newInstrument, name='newInstrument'),
+    url(r'^viewInstrument/$', views.viewInstrument, name='viewInstrument'),
 ]

@@ -85,7 +85,7 @@ class newInstrumentForm(forms.Form):
     market = forms.ModelChoiceField(label='Market:', queryset=Market.objects.all())
     marketdatatype = forms.ModelChoiceField(label='Market Data Type:', queryset=Marketdatatype.objects.all())
     currency = forms.ModelChoiceField(label='Currency:', queryset=Currency.objects.all())
-    undercurrency = forms.ModelChoiceField(label='Underlying Currency:', queryset=Currency.objects.all())
+    underlyingcurrency = forms.ModelChoiceField(label='Underlying Currency:', queryset=Currency.objects.all())
     country = forms.ModelChoiceField(label='Country:', queryset=Country.objects.all())
     risk_country = forms.ModelChoiceField(label='Risk Country:', queryset=Country.objects.all())
     names = forms.CharField(label='Instruments:', widget=forms.Textarea)
