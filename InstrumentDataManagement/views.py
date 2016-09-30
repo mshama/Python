@@ -28,12 +28,21 @@ def viewInstrument(request, instrument_id=''):
     if request.method == 'POST':
         print()
     elif request.method == 'GET':
-        instruments = Instrument.objects.all()
+        if instrument_id != '':
+            instrumentSynonyms = Instrumentsynonym.objects.filter(instrument_id=instrument_id)
+            instrument = Instrument.objects.get(id=instrument_id)
+            context = {
+                       'instrumentSynonyms': instrumentSynonyms,
+                       'instrument': instrument,
+                       }
+            return render(request, 'InstrumentDataManagement/viewInstrumentDetails.html', context)
+        else:
+            instruments = Instrument.objects.all()
         
-        context = {
-                   'instruments': instruments,
-                   }
-        return render(request, 'InstrumentDataManagement/viewInstrument.html', context)
+            context = {
+                       'instruments': instruments,
+                       }
+            return render(request, 'InstrumentDataManagement/viewInstrument.html', context)
         
 def newInstrument(request):
     if request.method == 'POST':

@@ -1,0 +1,60 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% include 'InstrumentDataManagement/includes.html' %}
+	<h2>Instrument Details</h2>
+	<table style="width: 30%;margin-left: auto;margin-right: auto;text-align:center">
+		{% for synonym in instrumentSynonyms %}
+		<tr>
+			<th>{{ synonym.codification.name_c }}:</th>
+			<td>{{ synonym.code_c }}</td>
+		</tr>
+		{% endfor%}
+	</table>
+	<hr>
+	<table style="width: 30%;margin-left: auto;margin-right: auto;text-align:center">
+		<tr>
+			<th colspan=2>Name:</th>
+			<td colspan=2>{{ instrument.name_c }}</td>
+		</tr>
+		<tr>
+			<th>Market:</th>
+			<td>{{ instrument.market }}</td>
+			<th>Market data type:</th>
+			<td>{{ instrument.marketdatatype }}</td>
+		</tr>
+		<tr>
+			<th>Country:</th>
+			<td>{{ instrument.country }}</td>
+			<th>Main currency:</th>
+			<td>{{ instrument.currency }}</td>
+		</tr>
+		<tr>
+			<th>Risk country:</th>
+			<td>{{ instrument.risk_country }}</td>
+			<th>Underlying currency:</th>
+			<td>{{ instrument.underlying_currency }}</td>
+		</tr>
+	</table>
+	<br>
+	<table style="width: 40%;margin-left: auto;margin-right: auto;text-align:center">
+		<tr>
+			<th>Multiplier</th>
+			<th>Nominal</th>
+			<th>Expiry date</th>
+			<th>Contract Forward Rate</th>
+			<th>Maturity</th>
+			<th>BPV</th>
+			<th>Strike</th>
+		</tr>
+		<tr>
+			<td>{{ instrument.multiplier_n | default_if_none:""}}</td>
+			<td>{{ instrument.nominal_n | default_if_none:""}}</td>
+			<td>{{ instrument.expiry_d | default_if_none:""}}</td>
+			<td>{{ instrument.contract_forward_rate_n | default_if_none:""}}</td>
+			<td>{{ instrument.maturity_n | default_if_none:""}}</td>
+			<tD>{{ instrument.bpv_n | default_if_none:""}}</td>
+			<tD>{{ instrument.strike_n | default_if_none:""}}</td>
+		</tr>
+	</table>
+
+{% endblock %}
