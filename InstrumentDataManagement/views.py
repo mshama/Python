@@ -24,11 +24,16 @@ def index(request):
     context = {'message': 'this is the data management home'}
     return render(request, 'InstrumentDataManagement/index.html', context)
 
-def viewInstrument(request):
+def viewInstrument(request, instrument_id=''):
     if request.method == 'POST':
         print()
     elif request.method == 'GET':
-        print()
+        instruments = Instrument.objects.all()
+        
+        context = {
+                   'instruments': instruments,
+                   }
+        return render(request, 'InstrumentDataManagement/viewInstrument.html', context)
         
 def newInstrument(request):
     if request.method == 'POST':

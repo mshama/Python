@@ -2,4 +2,36 @@
 {% block body_block %}
 	{% include 'InstrumentDataManagement/includes.html' %}
 	
+	<table style="width: 90%;margin-left: auto;margin-right: auto;text-align:left" id="list-table">
+		<tr>
+			<th>Name</th>
+			<th>Market Data Type</th>
+			<th>Market</th>
+			<th>Country</th>
+			<th>Currency</th>
+			<th>Underlying Currency</th>
+			<th>Risk Country</th>
+		</tr>
+		{% for instrument in instruments %}
+		<tr>
+			<td><a href="{% url 'InstrumentDataManagement:viewInstrument' instrument.id %}">{{ instrument.name_c }}</a></td>
+			<td>{{ instrument.marketdatatype.name_c }}</td>
+			<td>{{ instrument.market.name_c  | default_if_none:""}}</td>
+			<td>{{ instrument.country.name_c  | default_if_none:""}}</td>
+			<td>{{ instrument.currency.name_c | default_if_none:"" }}</td>
+			<td>{{ instrument.underlying_currency.name_c | default_if_none:"" }}</td>
+			<td>{{ instrument.risk_country.name_c | default_if_none:"" }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	
+	<script language="javascript" type="text/javascript">
+		var filter_config = 	{
+				paging: true,
+				paging_length: 10,
+				rows_counter: true,
+				btn_reset: true,
+			};
+		setFilterGrid("list-table",filter_config);
+	</script>
 {% endblock %}

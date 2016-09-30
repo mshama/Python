@@ -40,7 +40,7 @@ class newDatasourceFieldForm(forms.ModelForm):
 class newFieldMappingForm(forms.ModelForm):
     class Meta:
         model = MarketDataField_Mapping
-        fields = ('goldenrecord_field', 'datasource_field', 'marketdatatype', 'valid_from', 'valid_to',)
+        fields = ('goldenrecord_field', 'datasource_field', 'marketdatatype', 'valid_from_d', )
         labels = {
             'iso_code_c': _('ISO Code:'),
             'name_c': _('Name:'),
@@ -50,5 +50,4 @@ class newFieldMappingForm(forms.ModelForm):
     goldenrecord_field = forms.ModelChoiceField(queryset=GoldenRecordField.objects.all())
     datasource_field = forms.ModelChoiceField(queryset=DatasourceField.objects.all())
     marketdatatype = forms.ModelChoiceField(queryset=Marketdatatype.objects.all())
-    valid_from = forms.DateField(initial=datetime.now().date(), widget=forms.TextInput(attrs={ 'required': 'true' }),)
-    valid_to = forms.DateField(initial=datetime.now().date(), required=False)
+    valid_from_d = forms.DateField(initial=datetime.now().date(), widget=forms.TextInput(attrs={ 'required': 'true' }),)

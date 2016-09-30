@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from django import forms
 
-from .models import Marketdatatype, Market, Currency, Instrument, Codification, Country
+from .models import Currency, Instrument, Codification, Country, Marketdatatype, Market
 
 class newMarketDataTypeForm(forms.ModelForm):
     class Meta:

@@ -1,0 +1,59 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% load staticfiles %}
+	{% include 'MarketDataManagement/includes.html' %}
+	{% if msg %}
+		<form method='post' id ='sourceChoice' action="{% url 'MarketDataManagement:updateData' %}">
+			{% csrf_token %}
+			Choose data source:
+			<select name="source" id="source">
+				<option value="DS">Datastream</option>
+				<option value="BBG">Bloomberg</option>
+			</select>
+			<br><br>
+			<input type='submit' value='Update data'/>
+		</form>
+	{% else %}
+		{% if instrumentList %}
+			<script type="text/javascript">
+				//var currentInstrumentIndex = 0;
+				var instrumentList = {{ instrumentList | safe }};
+				var source = '{{ source }}';
+				var fullData = '{{ fullData }}';
+			</script>
+		{% endif %}
+		{% if message %}<p><strong>{{ message }}</strong></p>{% endif %}
+		<form method='post' id ='progress'>
+			{% csrf_token %}
+			<div id = 'currentInstrument'>Updating</div>
+		    <input type="hidden" id="automaticLoading" value="0" />
+		    
+			<!-- <progress id='progressbar' value="0" max="{{ instrumentList|length }}"></progress> -->
+			<div class="progress-container">
+				<div id="progressbar" class="progressbar progressbar-red" style="width:0%">
+					<div id="progresspercentage" class="text-center text-black">0%</div>
+				</div>
+			</div>
+	
+		</form>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				var dfd = $.Deferred(),
+				dfdNext = dfd;
+				x = 0;
+				values = [],
+				
+				dfd.resolve();
+				for(i = 0; i < instrumentList.length; i++){
+					values.push(i);
+					dfdNext = dfdNext.pipe(function(){
+						var index = values.shift();
+						return ajaxPost(index).done(function(response){
+						});
+					});
+				}
+				
+			});
+		</script>
+	{% endif %}
+{% endblock %}

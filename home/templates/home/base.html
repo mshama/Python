@@ -50,11 +50,8 @@
 									<a href="{% url 'InstrumentDataManagement:newInstrument' %}">New instrument</a>						
 								</li>
 								<li class="dropdown-menu">
-									<a href="#">View Instruments</a>						
-								</li>
-								<li class="dropdown-menu">
-									<a href="#">Update data</a>						
-								</li>					
+									<a href="{% url 'InstrumentDataManagement:viewInstrument' %}">View Instruments</a>						
+								</li>				
 							</ul>
 						</div>
 					</li>
@@ -69,8 +66,8 @@
 									<a href="{% url 'MarketDataManagement:manageMapping'%}">View all mapping</a>						
 								</li>
 								<li class="dropdown-menu">
-									<a href="#">Update data</a>						
-								</li>					
+									<a href="{% url 'MarketDataManagement:updateData'%}">Update data</a>						
+								</li>
 							</ul>
 						</div>
 					</li>

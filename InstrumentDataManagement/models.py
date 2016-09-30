@@ -28,7 +28,7 @@ class Market(models.Model):
     class Meta:
         managed = False
         db_table = 'Market'
-    
+        
 class Currency(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     name_c = models.CharField(db_column='Name_C', max_length=50)  # Field name made lowercase.

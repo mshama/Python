@@ -19,8 +19,8 @@
 			<td>{{ mapping.goldenrecord_field.name_c }}</td>
 			<td>{{ mapping.datasource_field.name_c }}</td>
 			<td>{{ mapping.marketdatatype.name_c }}</td>
-			<td>{{ mapping.valid_from }}</td>
-			<td>{{ mapping.valid_to|default_if_none:"" }}</td>
+			<td>{{ mapping.valid_from_d }}</td>
+			<td>{{ mapping.valid_to_d|default_if_none:"" }}</td>
 		</tr>
 		{% endfor %}
 	</table>
