@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^viewMapping/$', views.manageMapping, name='manageMapping'),
     url(r'^viewMapping/(active)/$', views.manageMapping, name='manageMapping'),
     url(r'^updateData/$', views.updateData, name='updateData'),
+    url(r'^updateData/?source=(DS|BBG)$', views.updateData, name='updateData'),
 ]

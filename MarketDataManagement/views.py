@@ -71,10 +71,7 @@ def newDatasourceField(request):
     
 def updateData(request, instrumentList=[]):
     if request.method == 'POST' and request.is_ajax():
-        try:
-            print(request.POST['currentInstrument'])
-        except Exception as e:
-            print('Error')
+        print(request.POST['currentInstrument'])
         source = request.POST['source']
         if 'fullData' in request.POST:
             fullData = request.POST['fullData']
@@ -107,8 +104,8 @@ def updateData(request, instrumentList=[]):
             else:
                 fullData = False
         elif 'instrumentList' in request.POST:
-            selectedInstruments = request.POST.getlist('instrumentList')            
-            instrumentList = pd.DataFrame(dict(zip(['bbname','description'], zip(*Instrument.objects.values_list('bbname','description').filter(id__in=selectedInstruments).order_by('description'))))).values.tolist()
+            selectedInstruments = request.POST.getlist('instrumentList')                        
+            instrumentList = Instrumentsynonym.objects.filter(codification__name_c=request.POST['source']+'_Ticker', code_c__in=selectedInstruments).values('instrument_id','instrument__name_c','code_c').annotate(max_validity_d=Max('validity_d'))
             if 'fullData' in request.POST:
                 fullData = True
             else:
@@ -127,10 +124,10 @@ def updateData(request, instrumentList=[]):
     elif request.method == 'GET':
         if 'source' in request.GET:
             if(request.GET['source']=='DS' or request.GET['source'] == 'BBG'):
-                instrumentList = pd.DataFrame(dict(zip(['bbname','description'], zip(*Instrument.objects.values_list('bbname','description').filter(source=request.GET['source']).order_by('description'))))).values.tolist()
+                instrumentList = Instrumentsynonym.objects.filter(codification__name_c=request.GET['source']+'_Ticker').values('instrument_id','instrument__name_c','code_c').annotate(max_validity_d=Max('validity_d'))
                 context = {
                            'source': request.GET['source'],
-                           'instrumentList': instrumentList,
+                           'instrumentList': list(instrumentList.all()),
                            'message': 'Automatic update',
                            'auto': 1,
                            }
