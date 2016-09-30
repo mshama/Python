@@ -3,6 +3,15 @@ from django.db import transaction
 
 from InstrumentDataManagement.models import Instrument, Market, Marketdatatype, Codification, Country, Currency
 
+# common functions
+def createPriceUpdateStatment(obj, update_fields):
+    sql = "UPDATE [" + obj._meta.db_table + "] SET "
+    for field in update_fields:
+        sql = sql + obj._meta.get_field(field).column + '=' + str(getattr(obj, field)) + ','
+    sql = sql[:-1] + " WHERE date_d = '" + str(getattr(obj, 'date')) + "'"
+    sql = sql + "AND Instrument_ID = " + str(getattr(obj, 'instrument').id)
+    return sql
+
 # Create your models here. 
 class GoldenRecordField(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)
@@ -57,11 +66,7 @@ class MarketData_Stock_DataStream_C(models.Model):
     def update(self,update_fields):
         from django.db import connection
         cursor = connection.cursor()
-        sql = "UPDATE [" + self._meta.db_table + "] SET "
-        for field in update_fields:
-            sql = sql + self._meta.get_field(field).column + '=' + str(getattr(self, field)) + ','
-        sql = sql[:-1] + " WHERE date_d = '" + str(getattr(self, 'date')) + "'"
-        sql = sql + "AND Instrument_ID = " + str(getattr(self, 'instrument').id)
+        sql = createPriceUpdateStatment(self,update_fields)
         cursor.execute(sql)
         cursor.close()
         
@@ -79,11 +84,7 @@ class MarketData_InterestRate_DataStream_C(models.Model):
     def update(self,update_fields):
         from django.db import connection
         cursor = connection.cursor()
-        sql = "UPDATE [" + self._meta.db_table + "] SET "
-        for field in update_fields:
-            sql = sql + self._meta.get_field(field).column + '=' + str(getattr(self, field)) + ','
-        sql = sql[:-1] + " WHERE date_d = '" + str(getattr(self, 'date')) + "'"
-        sql = sql + "AND Instrument_ID = " + str(getattr(self, 'instrument').id)
+        sql = createPriceUpdateStatment(self,update_fields)
         cursor.execute(sql)
         cursor.close()
         
@@ -100,11 +101,7 @@ class MarketData_Bond_DataStream_C(models.Model):
     def update(self,update_fields):
         from django.db import connection
         cursor = connection.cursor()
-        sql = "UPDATE [" + self._meta.db_table + "] SET "
-        for field in update_fields:
-            sql = sql + self._meta.get_field(field).column + '=' + str(getattr(self, field)) + ','
-        sql = sql[:-1] + " WHERE date_d = '" + str(getattr(self, 'date')) + "'"
-        sql = sql + "AND Instrument_ID = " + str(getattr(self, 'instrument').id)
+        sql = createPriceUpdateStatment(self,update_fields)
         cursor.execute(sql)
         cursor.close()
 
@@ -122,24 +119,28 @@ class MarketData_Derivative_DataStream_C(models.Model):
     def update(self,update_fields):
         from django.db import connection
         cursor = connection.cursor()
-        sql = "UPDATE [" + self._meta.db_table + "] SET "
-        for field in update_fields:
-            sql = sql + self._meta.get_field(field).column + '=' + str(getattr(self, field)) + ','
-        sql = sql[:-1] + " WHERE date_d = '" + str(getattr(self, 'date')) + "'"
-        sql = sql + "AND Instrument_ID = " + str(getattr(self, 'instrument').id)
+        sql = createPriceUpdateStatment(self,update_fields)
         cursor.execute(sql)
         cursor.close()
 
-class MasterData_Stock_C(models.Model):
+class MarketData_Stock_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
-    strike_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
+    eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
         db_table = 'MarketData_Stock_C'
         unique_together = (('instrument', 'date'),)
+        
+    @transaction.atomic
+    def update(self,update_fields):
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = createPriceUpdateStatment(self,update_fields)
+        cursor.execute(sql)
+        cursor.close()
 
         
 class MarketData_Derivative_C(models.Model):
@@ -154,3 +155,47 @@ class MarketData_Derivative_C(models.Model):
         db_table = 'MarketData_Derivative_C'
         unique_together = (('instrument', 'date'),)
         
+    @transaction.atomic
+    def update(self,update_fields):
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = createPriceUpdateStatment(self,update_fields)
+        cursor.execute(sql)
+        cursor.close()
+
+class MarketData_Bond_C(models.Model):
+    instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
+    date = models.DateField(db_column='date_d', primary_key=True)
+    price_n = models.DecimalField(db_column='price_n', max_digits=12, decimal_places=6)
+        
+    class Meta:
+        managed = False
+        db_table = 'MarketData_Bond_C'
+        unique_together = (('instrument', 'date'),)
+    
+    @transaction.atomic
+    def update(self,update_fields):
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = createPriceUpdateStatment(self,update_fields)
+        cursor.execute(sql)
+        cursor.close()
+        
+class MarketData_InterestRate_C(models.Model):
+    instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
+    date = models.DateField(db_column='date_d', primary_key=True)
+    return_n = models.DecimalField(db_column='return_n', max_digits=12, decimal_places=6)
+    
+    class Meta:
+        managed = False
+        db_table = 'MarketData_InterestRate_C'
+        unique_together = (('instrument', 'date'),)
+    
+        
+    @transaction.atomic
+    def update(self,update_fields):
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = createPriceUpdateStatment(self,update_fields)
+        cursor.execute(sql)
+        cursor.close()
