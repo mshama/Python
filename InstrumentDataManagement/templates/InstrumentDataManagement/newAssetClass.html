@@ -1,0 +1,12 @@
+<div id="asset-class-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Asset Class</label></h3>
+		<form action="{% url 'InstrumentDataManagement:newAssetClass'%}" method="post">
+		    {% csrf_token %}
+		    {{ assetClassForm.as_p }}
+		    <br /> 
+		    <input name="newAssetClass" type="submit" value="Add" class="submit-button"/>
+		</form>
+	<a href='#' onclick='overlayClick("asset-class-overlay")'>close</a>
+	</div>
+</div>

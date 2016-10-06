@@ -7,20 +7,30 @@
 	{% include 'MarketDataManagement/addMapping.html' %}
 	
 	<table style="width: 90%;margin-left: auto;margin-right: auto;text-align:left" id="mappings-table">
-		<tr>
+		<tr class="mappings-table-row">
 			<th>Golden record field</th>
 			<th>Datasource field</th>
 			<th>Market data type</th>
 			<th>Valid from</th>
 			<th>Valid to</th>
+			<th></th>
 		</tr>
 		{% for mapping in field_mapping %}
-		<tr>
+		<tr class="mappings-table-row">
 			<td>{{ mapping.goldenrecord_field.name_c }}</td>
 			<td>{{ mapping.datasource_field.name_c }}</td>
 			<td>{{ mapping.marketdatatype.name_c }}</td>
 			<td>{{ mapping.valid_from_d }}</td>
 			<td>{{ mapping.valid_to_d|default_if_none:"" }}</td>
+			<td>
+				<a href="{% url 'MarketDataManagement:deactivateMapping' mapping.id %}" class="button-link">
+				{% if mapping.valid_to_d == None %}
+					Deactivate
+				{% else %}
+					Activate
+				{% endif %}
+				</a>
+			</td>
 		</tr>
 		{% endfor %}
 	</table>

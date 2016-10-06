@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse,HttpResponseNotFound
 from django.db.models import Max
 from django.template.context_processors import request
@@ -13,10 +13,10 @@ from _datetime import datetime
 from dataconnections.datasource import get_metaData, get_PriceData
 
 # models import
-from .models import Instrument, Instrumentsynonym, Codification
+from .models import Instrument, Instrumentsynonym, Codification, AssetClass, AssetClass_Instrument
 
 # forms import
-from .forms import newMarketDataTypeForm,newMarketForm,newInstrumentForm, newCountryForm, newCurrencyForm
+from .forms import newMarketDataTypeForm,newMarketForm,newInstrumentForm, newCountryForm, newCurrencyForm, newAssetClassForm, instrumentAssetClassMapping
 
 # Create your views here.
 
@@ -42,7 +42,7 @@ def viewInstrument(request, instrument_id=''):
             context = {
                        'instruments': instruments,
                        }
-            return render(request, 'InstrumentDataManagement/viewInstrument.html', context)
+            return render(request, 'InstrumentDataManagement/viewInstruments.html', context)
         
 def newInstrument(request):
     if request.method == 'POST':
@@ -111,22 +111,73 @@ def insertInstruments(request):
             ).save()
 
 def newMarketDataType(request):
-        form = newMarketDataTypeForm(request.POST)
-        if not form.save():
-            return False
+    form = newMarketDataTypeForm(request.POST)
+    if not form.save():
+        return False
         
 def newMarket(request):
-        form = newMarketForm(request.POST)
-        if not form.save():
-            return False
+    form = newMarketForm(request.POST)
+    if not form.save():
+        return False
         
 def newCountry(request):
-        form = newCountryForm(request.POST)
-        if not form.save():
-            return False
+    form = newCountryForm(request.POST)
+    if not form.save():
+        return False
 
 def newCurrency(request):
-        form = newCurrencyForm(request.POST)
-        if not form.save():
-            return False
-    
+    form = newCurrencyForm(request.POST)
+    if not form.save():
+        return False
+        
+def viewAssetClasses(request, assetclass_id=''):
+    if request.method == 'GET':
+        if assetclass_id != '':
+            asset_class = AssetClass.objects.get(pk=assetclass_id)
+            mappings = AssetClass_Instrument.objects.filter(assetclass=asset_class)
+            mappingForm = instrumentAssetClassMapping()
+            context = {                       
+                       'asset_class': asset_class,
+                       'mappings': mappings,
+                       'mappingForm': mappingForm,
+                       }
+            return render(request, 'InstrumentDataManagement/viewAssetClassDetails.html', context)
+        else:
+            asset_classes = AssetClass.objects.all().order_by('parent_assetclass')
+            assetClassForm = newAssetClassForm()
+            context = {
+                       'asset_classes': asset_classes,
+                       'assetClassForm': assetClassForm,
+                       }
+            return render(request, 'InstrumentDataManagement/viewAssetClasses.html', context)
+        
+def newAssetClass(request):
+    if request.method == 'POST':
+        form = newAssetClassForm(request.POST)
+        if form.is_valid():
+            asset_class = AssetClass(**form.cleaned_data)
+            if asset_class.parent_assetclass is None:
+                asset_class.level_n = 0
+            else:
+                asset_class.level_n = asset_class.parent_assetclass.level_n + 1
+            asset_class.save()
+            return redirect('InstrumentDataManagement:viewAssetClasses')
+        else:
+            return HttpResponse('Error')
+
+def deltInstrumentAssetClass(request, assetclass_id=''):
+    if request.method == 'POST':
+        mappings_ids = request.POST.getlist('mappings_ids')
+        mapings = AssetClass_Instrument.objects.filter(pk__in=mappings_ids).delete()
+        return redirect('InstrumentDataManagement:viewAssetClasses', assetclass_id=assetclass_id, )
+        
+def addInstrumentAssetClass(request, assetclass_id=''):
+    if request.method == 'POST':
+        mappingForm = instrumentAssetClassMapping(request.POST)
+        if mappingForm.is_valid():
+            asset_class = AssetClass.objects.get(pk=assetclass_id)
+            for instrument in mappingForm.cleaned_data['instruments']:
+                AssetClass_Instrument(assetclass=asset_class,
+                                      instrument=instrument,
+                                      level_n=mappingForm.cleaned_data['level']).save()
+            return redirect('InstrumentDataManagement:viewAssetClasses', assetclass_id=assetclass_id, )

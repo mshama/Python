@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseNotFound
 from django.db.models import Max
 from django.template.context_processors import request
@@ -50,9 +50,17 @@ def manageMapping(request, condition=''):
     return render(request, 'MarketDataManagement/viewMapping.html', context)
             
 def addMapping(request):
+    # get data from the HTTP request
     form = newFieldMappingForm(request.POST)
-    if not form.save():
-        return False
+    if form.is_valid():
+        # check if there is any old mappings with the same criteria 
+        old_mappings = MarketDataField_Mapping.objects.filter(goldenrecord_field=form.cleaned_data['goldenrecord_field'], marketdatatype=form.cleaned_data['marketdatatype'], valid_to_d__isnull=True)
+        # disable the old mappings by setting the valid to date for them
+        for mapping in old_mappings:
+            mapping.valid_to_d = datetime.now().date().strftime('%Y-%m-%d')
+            mapping.save()
+        if not form.save():
+            return False
             
 def newMarketDataType(request):
     form = newMarketDataTypeForm(request.POST)
@@ -68,6 +76,23 @@ def newDatasourceField(request):
     form = newDatasourceFieldForm(request.POST)
     if not form.save():
         return False
+    
+def deactivateMapping(request, mapping_id=''):
+    if request.method == 'GET':
+        updatedMapping = MarketDataField_Mapping.objects.get(pk=mapping_id)
+        if updatedMapping.valid_to_d is not None:
+            # check if there is any old mappings with the same criteria 
+            old_mappings = MarketDataField_Mapping.objects.filter(goldenrecord_field=updatedMapping.goldenrecord_field, marketdatatype=updatedMapping.marketdatatype, valid_to_d__isnull=True)
+            # disable the old mappings by setting the valid to date for them
+            for mapping in old_mappings:
+                mapping.valid_to_d = datetime.now().date().strftime('%Y-%m-%d')
+                mapping.save()
+            valid_to = None
+        else:
+            valid_to = datetime.now().date().strftime('%Y-%m-%d')
+        updatedMapping.valid_to_d = valid_to
+        updatedMapping.save()
+        return redirect('MarketDataManagement:manageMapping')
     
 def updateData(request, instrumentList=[]):
     if request.method == 'POST' and request.is_ajax():

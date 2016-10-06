@@ -1,0 +1,18 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% include 'MarketDataManagement/includes.html' %}
+	<form action="{% url 'MarketDataManagement:editMapping'%}" method="post">
+		{% csrf_token %}
+	    <p>	    	
+	    	<strong>Golden record field:</strong> {{mapping.goldenrecord_field}}<br>
+	    	<strong>Data source field:</strong> {{mapping.datasource_field}}<br>
+	    	<strong>Market data type:</strong> {{mapping.marketdatatype}}<br>
+	    	<strong>Valid from:</strong> {{mapping.valid_from_d}}<br>
+	    	<strong>Valid to:</strong> <input type="date" name="valid_to" value='{{mapping.valid_to_d | default_if_none:""}}'><br>
+	    </p>
+	    <br />
+	    <input name="mapping_id" type="hidden" value="{{mapping.id}}"> 
+	    <input name="editFieldMapping" type="submit" value="Update" />
+	</form>
+	<a href="{% url 'MarketDataManagement:manageMapping'%}">Cancel</a>
+{% endblock %}

@@ -21,6 +21,16 @@ django.setup()
 from InstrumentDataManagement.models import Instrumentsynonym
 from MarketDataManagement.models import MarketData_Bond_C, MarketData_Derivative_C, MarketData_InterestRate_C, MarketData_Stock_C 
 
+def load_instrument(instrument):
+    marketdatatype = Instrumentsynonym.objects.get(code_c=instrument).instrument.marketdatatype.type_c
+    if marketdatatype == 'Stock':
+        return load_stock_instrument(instrument)
+    elif marketdatatype == 'Bond':
+        return load_bond_instrument(instrument)
+    elif marketdatatype == 'InterestRate':
+        return load_interestrate_instrument(instrument)
+    elif marketdatatype == 'Derivative':
+        return load_derivative_instrument(instrument)
 
 def load_stock_instrument(instrument):
     instrumentData = {'instrumentName': instrument}

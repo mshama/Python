@@ -1,0 +1,34 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% include 'InstrumentDataManagement/includes.html' %}
+	{% include 'InstrumentDataManagement/newAssetClass.html' %}
+	
+	<table style="width: 60%;margin-left: auto;margin-right: auto;text-align:left" id="list-table">
+		<tr>
+			<th>Name</th>
+			<th>Denomination</th>
+			<th>Level</th>
+			<th>Parent</th>
+		</tr>
+		{% for asset_class in asset_classes %}
+		<tr>
+			<td><a href="{% url 'InstrumentDataManagement:viewAssetClasses' asset_class.id %}">{{ asset_class.name_c }}</a></td>
+			<td>{{ asset_class.denomination_c | default_if_none:"" }}</td>
+			<td>{{ asset_class.level_n | default_if_none:"" }}</td>
+			<td>{{ asset_class.parent_assetclass.name_c | default_if_none:"" }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	
+	<script language="javascript" type="text/javascript">
+		var filter_config = 	{
+				paging: true,
+				paging_length: 10,
+				rows_counter: true,
+				btn_reset: true,
+			};
+		setFilterGrid("list-table",filter_config);
+	</script>
+	<br><br>
+	<a href="#" onclick="overlayClick('asset-class-overlay')" class="button-link">New asset class</a>
+{% endblock %}

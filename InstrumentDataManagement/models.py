@@ -58,7 +58,7 @@ class Country(models.Model):
 class Codification(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     name_c = models.CharField(db_column='Name_C', max_length=50)  # Field name made lowercase.
-    denomination_c = models.CharField(db_column='Denomination_C', max_length=50)  # Field name made lowercase.
+    denomination_c = models.CharField(db_column='Denomination_C', max_length=50, blank=True, null=True)  # Field name made lowercase.
     
     def __str__(self):
         return self.name_c
@@ -70,11 +70,13 @@ class Codification(models.Model):
 class AssetClass(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     name_c = models.CharField(db_column='Name_C', max_length=50)  # Field name made lowercase.
-    denomination_c = models.CharField(db_column='Denomination_C', max_length=50)  # Field name made lowercase.
+    denomination_c = models.CharField(db_column='Denomination_C', max_length=50, blank=True, null=True)  # Field name made lowercase.
+    parent_assetclass = models.ForeignKey('AssetClass', models.DO_NOTHING, db_column='parent_assetclass_id', null=True)  # Field name made lowercase.
+    level_n = models.IntegerField(db_column='Level_N')  # Field name made lowercase.
     
     def __str__(self):
         return self.name_c
-    
+        
     class Meta:
         managed = False
         db_table = 'AssetClass'
@@ -82,7 +84,7 @@ class AssetClass(models.Model):
 class Instrument(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     name_c = models.CharField(db_column='Name_C', max_length=50)  # Field name made lowercase.
-    denomination_c = models.CharField(db_column='Denomination_C', max_length=100)  # Field name made lowercase.
+    denomination_c = models.CharField(db_column='Denomination_C', max_length=100, blank=True, null=True)  # Field name made lowercase.
     market = models.ForeignKey(Market, models.DO_NOTHING, db_column='Market_ID')  # Field name made lowercase.
     currency = models.ForeignKey(Currency, models.DO_NOTHING, db_column='Currency_ID', related_name='currency')  # Field name made lowercase.
     marketdatatype = models.ForeignKey(Marketdatatype, models.DO_NOTHING, db_column='MarketDataType_ID')  # Field name made lowercase.
@@ -106,13 +108,14 @@ class Instrument(models.Model):
         
         
 class AssetClass_Instrument(models.Model):
+    id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     assetclass = models.ForeignKey(AssetClass, models.DO_NOTHING, db_column='AssetClass_ID')  # Field name made lowercase.
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
-    level_n = models.IntegerField(db_column='Level_N')  # Field name made lowercase.
     
     class Meta:
         managed = False
         db_table = 'AssetClass_Instrument'
+        unique_together = (('assetclass', 'instrument',))
         
 class Instrumentsynonym(models.Model):
     codification = models.ForeignKey(Codification, models.DO_NOTHING, db_column='Codification_ID')  # Field name made lowercase.
