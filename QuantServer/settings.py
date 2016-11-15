@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'home',
     'InstrumentDataManagement',
     'MarketDataManagement',
+    'PortfolioPositionManagement',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -84,7 +85,9 @@ DATABASES = {
         'HOST': 'APPSRV',
         'PORT': '',
         'USER': 'RoboQuant',
-        'PASSWORD': 'Quant2015',        
+        'PASSWORD': 'Quant2015',
+#         'USER': 'sa',
+#         'PASSWORD': 'admin1234',        
     }
 }
 

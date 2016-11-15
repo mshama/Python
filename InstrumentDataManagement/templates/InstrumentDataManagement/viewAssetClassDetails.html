@@ -30,12 +30,13 @@
 			<tr>
 				<th>Select</th>
 				<th>Instrument</th>
-				<th>Level</th>
+				<th>Mandate</th>
 			</tr>
 			{% for mapping in mappings %}
 			<tr>
 				<td><input type="checkbox" name="mappings_ids" value="{{ mapping.id }}"></td>
 				<td>{{ mapping.instrument.name_c }}</td>
+				<td>{{ mapping.mandate.name_c | add:" - " | add:mapping.mandate.portfolio.name_c }}</td>
 			</tr>
 			{% endfor %}
 		</table>
@@ -53,5 +54,7 @@
 		<a href="#" onclick="overlayClick('instrument-asset-class-overlay')" class="button-link">Add instrument(s) to asset class</a>
 		<br><br>
 		<input type="submit" value="Delete selected" class="submit-button">
+		<br><br>
+		<a href="{% url 'InstrumentDataManagement:viewAssetClasses' %}" class="button-link">Back</a>
 	</form>
 {% endblock %}

@@ -1,0 +1,12 @@
+<div id="instrument-synonym-overlay" class="overlay-form">
+	<div>
+		<h3><label> Add instrument synonym</label></h3>
+		<form action="{% url 'InstrumentDataManagement:addInstrumentSynonym'%}" method="post">
+		    {% csrf_token %}
+		    {{ synonymForm.as_p }}
+		    <br /> 
+		    <input name="addInstrumentSynonym" type="submit" value="Submit" class="submit-button"/>
+		</form>
+	<a href='#' onclick='overlayClick("instrument-synonym-overlay")'>close</a>
+	</div>
+</div>

@@ -1,12 +1,20 @@
 {% extends 'home/base.html' %}
+{% load staticfiles%}
 {% block body_block %}
 	{% include 'InstrumentDataManagement/includes.html' %}
+	{% include 'InstrumentDataManagement/addInstrumentSynynom.html' %}
 	<h2>Instrument Details</h2>
+	<div class="errorMessages">{{ errorMessages }}</div>
 	<table style="width: 30%;margin-left: auto;margin-right: auto;text-align:center">
 		{% for synonym in instrumentSynonyms %}
 		<tr>
 			<th>{{ synonym.codification.name_c }}:</th>
 			<td>{{ synonym.code_c }}</td>
+			<td>
+				<a href="{% url 'InstrumentDataManagement:deltInstrumentSynonym' synonym_id=synonym.id %}">
+					<img src="{% static 'home/images/delete.png' %}"/>
+				</a>
+			</td>
 		</tr>
 		{% endfor%}
 	</table>
@@ -56,5 +64,8 @@
 			<tD>{{ instrument.strike_n | default_if_none:""}}</td>
 		</tr>
 	</table>
+	<hr/>
+	<a href="{% url 'InstrumentDataManagement:viewInstrument' %}">Back</a> /
+	<a href="#" onclick="overlayClick('instrument-synonym-overlay')">Add synonym</a>
 
 {% endblock %}

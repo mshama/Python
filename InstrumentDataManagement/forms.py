@@ -7,7 +7,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from django import forms
 
-from .models import Currency, Instrument, Codification, Country, Marketdatatype, Market, AssetClass
+from .models import Currency, Instrument, Codification, Country, Marketdatatype, Market, AssetClass, Instrumentsynonym
+from PortfolioPositionManagement.models import Mandate
 
 class newMarketDataTypeForm(forms.ModelForm):
     class Meta:
@@ -69,6 +70,8 @@ class newAssetClassForm(forms.ModelForm):
 
 class instrumentAssetClassMapping(forms.Form):
     instruments = forms.ModelMultipleChoiceField(label='Choose Instruments', queryset=Instrument.objects.all(), widget=forms.SelectMultiple(attrs={'size': 20}),)
+    mandate = forms.ModelChoiceField(label='Mandate:', queryset=Mandate.objects.all(), required=True,)
+    
 
 class newCurrencyForm(forms.ModelForm):
     class Meta:
@@ -99,7 +102,7 @@ class newCountryForm(forms.ModelForm):
         }
 
 class newInstrumentForm(forms.Form):
-    codification = forms.ModelChoiceField(label='Code type:', queryset=Codification.objects.all())
+    source = forms.ChoiceField(label='Source:',  choices = ([('DS','DataStream'), ('BBG','Bloomberg'), ('ISIN','ISIN'),]),required=True,)
     market = forms.ModelChoiceField(label='Market:', queryset=Market.objects.all(), required=False,)
     marketdatatype = forms.ModelChoiceField(label='Market Data Type:', queryset=Marketdatatype.objects.all())
     currency = forms.ModelChoiceField(label='Currency:', queryset=Currency.objects.all(), required=False,)
@@ -107,3 +110,8 @@ class newInstrumentForm(forms.Form):
     country = forms.ModelChoiceField(label='Country:', queryset=Country.objects.all(), required=False,)
     risk_country = forms.ModelChoiceField(label='Risk Country:', queryset=Country.objects.all(), required=False,)
     names = forms.CharField(label='Instruments:', widget=forms.Textarea)
+    
+class newInstrumentSynonymForm(forms.Form):
+    codification = forms.ModelChoiceField(label='Code type:', queryset=Codification.objects.all())
+    code_c = forms.CharField(label='Code:')
+    instrument = forms.CharField(label='Instrument', widget=forms.HiddenInput)
