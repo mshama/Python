@@ -8,6 +8,7 @@ from _datetime import datetime,timedelta
 import numpy as np
 import re
 import pycountry
+import pandas as pd
 
 def create_DataStreamConnection():
     return Datastream(username="DS:ZQAJ001", password="POINT954")
@@ -82,6 +83,25 @@ def get_main_market_field(instrument_type):
             'Fixed_Income': 'PRICING_SOURCE',
             'Derivative':   'ID_MIC_PRIM_EXCH',
             }.get(instrument_type)
+            
+def get_static_BBG(instrument_ticker, fields=[]):
+    from xmlrpc import client
+        
+    proxy = client.ServerProxy('http://192.168.100.20:8080')
+    try:
+        static_data = proxy.get_reference_data(instrument_ticker, fields)
+        # remove ticker field
+        static_data.pop('ticker')
+        # remove non valid values 'NULL' and replace them with None
+        for key, value in static_data.items():
+            static_data[key] = [item if item != 'NULL' else None for item in value]
+        return static_data
+    except TimeoutError:
+        print('connection to BBG server cannot be established. make sure that the RPC service is running')
+        return None
+    except Exception as e:
+        pass
+    return {}
 
 def get_metaData_ISIN(ISIN, instrument_type, market=None):
     """
@@ -133,11 +153,14 @@ def get_metaData_ISIN(ISIN, instrument_type, market=None):
         return None
 
 def get_metaData_BBG(instrument,instrument_type):
+    instrument_data = None
     try:
         from xmlrpc import client
         proxy = client.ServerProxy('http://192.168.100.20:8080')
         main_market_field = get_main_market_field(instrument_type)
-        fields = ['NAME', 'ID_ISIN', 'CNTRY_OF_RISK', 'COUNTRY_ISO', 'FUT_CONT_SIZE', 'OPT_STRIKE_PX', main_market_field]
+        fields = ['NAME', 'ID_ISIN', 'CNTRY_OF_RISK', 'COUNTRY_ISO', 'FUT_CONT_SIZE', 'OPT_STRIKE_PX']
+        if main_market_field:
+            fields.append(main_market_field)
         instrument_data = proxy.get_bloomberg_instr_meta_data(instrument, fields)
         
         instrument_data =  {'BBG_Ticker':str(instrument_data['ticker']),
@@ -148,7 +171,7 @@ def get_metaData_BBG(instrument,instrument_type):
                             'cntry_of_risk': str(pycountry.countries.get(alpha_2=instrument_data['CNTRY_OF_RISK']).alpha_3) if instrument_data['CNTRY_OF_RISK']!='NULL' else None,
                             'strike': str(instrument_data['OPT_STRIKE_PX']),
                             'expiry_date':None,
-                            'market': str(instrument_data[main_market_field]),
+                            'market': str(instrument_data[main_market_field]) if main_market_field else None,
                             }
         
         for key, value in instrument_data.items():
@@ -247,21 +270,35 @@ def get_DS_PriceData(instrument, fields, lastPriceDate):
     priceData.columns = fieldnames
     return priceData
 
-def get_BBG_PriceData(instrument, fields, lastPriceDate):
+def get_BBG_PriceData(instrument, fields, lastPriceDate, end_date = datetime.now()):
     from xmlrpc import client
         
     proxy = client.ServerProxy('http://192.168.100.20:8080')
     try:
-        price_data = proxy.get_historical_data(instrument, fields, lastPriceDate.strftime('%Y%m%d'))
+        price_data = proxy.get_historical_data(instrument, fields, lastPriceDate.strftime('%Y%m%d'), end_date.strftime("%Y%m%d"))
+        # check if data was empty then try to read current data
+        if not price_data:
+            price_data = proxy.get_reference_data(instrument, fields)
+        # remove ticker field
+        price_data.pop('ticker')
+        # remove non valid values 'NULL' and replace them with None
         for key, value in price_data.items():
             price_data[key] = [item if item != 'NULL' else None for item in value]
+        # convert the date column from type string to type datetime
+        for i in range(len(price_data['date'])):
+            price_data['date'][i] = datetime.strptime(price_data['date'][i],'%Y-%m-%d')
+        # convert the dictionary to a dataframe with index to be the date column
+        price_data = pd.DataFrame.from_dict(price_data).set_index('date')
+        # converts keys to lower case to match the field names of the model class
+        fieldnames = [field.lower() for field in price_data.keys()]
+        price_data.columns = fieldnames
         return price_data
     except TimeoutError:
         print('connection to BBG server cannot be established. make sure that the RPC service is running')
         return None
     except Exception as e:
         pass
-    return []
+    return None
 
 def get_PriceData(datasource, instrument, fields, lastPriceDate='2000-01-01'):
     lastPriceDate =  datetime.strptime(lastPriceDate, '%Y-%m-%d') - timedelta(days=5)

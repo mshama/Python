@@ -31,7 +31,7 @@ from InstrumentDataManagement.models import Instrumentsynonym, Instrument, Marke
 from dataconnections.datasource import get_metaData, get_bond_metaData, get_metaData_ISIN
 
 
-def new_instrument(instrument_ticker, ticker_type, market_data_type, currency, underlying_curreny, market=None):
+def new_instrument(instrument_ticker, ticker_type, market_data_type, currency, underlying_curreny, market=None, active=True):
     market_data_type = Marketdatatype.objects.get(name_c=market_data_type)
     try:
         if currency != None:
@@ -58,8 +58,7 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency, u
             # check if this bloomberg code already exists
             try:
                 # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
-                Instrumentsynonym.objects.get(code_c=instrument_ticker)
-                return
+                return Instrumentsynonym.objects.get(code_c=instrument_ticker).instrument                
             except ObjectDoesNotExist as e:
                 instrument_metaData_BBG = get_metaData(instrument_ticker, 'BBG', market_data_type.type_c)
                 instrument_metaData_DS = get_metaData(instrument_metaData_BBG['ISIN'], 'DS')
@@ -71,7 +70,7 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency, u
                 # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
                 inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_BBG['BBG_Ticker'])
                 if inst_syn.instrument.marketdatatype.name_c == market_data_type.name_c:
-                    return
+                    return inst_syn.instrument
             except ObjectDoesNotExist as e:
                 pass
     else:
@@ -82,15 +81,14 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency, u
                 # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
                 inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_BBG['BBG_Ticker'])
                 if inst_syn.instrument.marketdatatype.name_c == market_data_type.name_c:
-                    return
+                    return inst_syn.instrument
             except ObjectDoesNotExist as e:
                 instrument_metaData_DS = get_metaData(instrument_metaData_BBG['ISIN'], 'DS')
         elif ticker_type == 'BBG':
             # check if this bloomberg code already exists
             try:
                 # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
-                Instrumentsynonym.objects.get(code_c=instrument_ticker)
-                return
+                return Instrumentsynonym.objects.get(code_c=instrument_ticker).instrument
             except ObjectDoesNotExist as e:
                 instrument_metaData_BBG = get_metaData(instrument_ticker, 'BBG', market_data_type.type_c)
                 instrument_metaData_DS = get_metaData(instrument_metaData_BBG['ISIN'], 'DS')
@@ -102,7 +100,7 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency, u
                 # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
                 inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_BBG['BBG_Ticker'])
                 if inst_syn.instrument.marketdatatype.name_c == market_data_type.name_c:
-                    return
+                    return inst_syn.instrument
             except ObjectDoesNotExist as e:
                 pass
     try:
@@ -173,36 +171,38 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency, u
                 bondtype_c = bond_meta_data['bond_type'],
                 ).save()
         # insert the synonyms for the current instrument
-        if instrument_metaData_DS['DS_Ticker'] != 'NA':
+        if instrument_metaData_DS['DS_Ticker'] and instrument_metaData_DS['DS_Ticker'] != 'NA':
             Instrumentsynonym(
                 instrument = instrument,
                 codification = Codification.objects.get(name_c='DS_Ticker'),
                 code_c = instrument_metaData_DS['DS_Ticker'],
-                validity_d = datetime.now().date(),
+                validity_d = datetime.now().date() if active else None,
             ).save()
-        if instrument_metaData_DS['DS_Code'] != 'NA':
+        if instrument_metaData_DS['DS_Code'] and instrument_metaData_DS['DS_Code'] != 'NA':
             Instrumentsynonym(
                 instrument = instrument,
                 codification = Codification.objects.get(name_c='DS_Code'),
                 code_c = instrument_metaData_DS['DS_Code'],
-                validity_d = datetime.now().date(),
+                validity_d = datetime.now().date() if active else None,
             ).save()
         if instrument_metaData_BBG['BBG_Ticker'] != None:
             Instrumentsynonym(
                 instrument = instrument,
                 codification = Codification.objects.get(name_c='BBG_Ticker'),
                 code_c = instrument_metaData_BBG['BBG_Ticker'],
-                validity_d = datetime.now().date(),
+                validity_d = datetime.now().date() if active else None,
             ).save()
         if instrument_metaData_BBG['ISIN'] != None:
             Instrumentsynonym(
                 instrument = instrument,
                 codification = Codification.objects.filter(name_c='ISIN')[0],
                 code_c = instrument_metaData_BBG['ISIN'],
-                validity_d = datetime.now().date(),
+                validity_d = datetime.now().date() if active else None,
             ).save()
+        return instrument
     except Exception as e:
         ## we need to collect instruments with errors and send an email containing the errors faced
         ## during the insertion
-        pass
+        print('Error happened while inserting instrument')
+        return None
         

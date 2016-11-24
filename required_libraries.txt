@@ -1,0 +1,2 @@
+# required to be able to convert country/currency alpha2 codes to alpha 3 codes
+pip install pycountry

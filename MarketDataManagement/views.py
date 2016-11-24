@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.db.models import Max
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
 # from django.template.context_processors import request
 # from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -11,18 +12,26 @@ from _datetime import datetime
 import re
 
 # own libraries
-from dataconnections.datasource import get_PriceData
+from dataconnections.datasource import get_PriceData, get_static_BBG,\
+    get_BBG_PriceData
+
+from data_saving.saving_functions import new_instrument
 
 # model imports
 from .models import MarketDataField_Mapping 
-from .models import MarketData_Equity_DataStream_C, MarketData_Fixed_Income_DataStream_C, MarketData_Derivative_DataStream_C, MarketData_InterestRate_DataStream_C, MarketData_Index_DataStream_C
-from .models import MarketData_Equity_C, MarketData_Fixed_Income_C, MarketData_Derivative_C, MarketData_InterestRate_C, MarketData_Index_C
-from .models import MarketData_Equity_Bloomberg_C, MarketData_Fixed_Income_Bloomberg_C, MarketData_Derivative_Bloomberg_C, MarketData_InterestRate_Bloomberg_C, MarketData_Index_Bloomberg_C
-from InstrumentDataManagement.models import Instrument, Instrumentsynonym, Codification
+from .models import MarketData_Equity_DataStream_C, MarketData_Fixed_Income_DataStream_C, MarketData_Derivative_DataStream_C,\
+        MarketData_InterestRate_DataStream_C, MarketData_Index_DataStream_C
+from .models import MarketData_Equity_C, MarketData_Fixed_Income_C, MarketData_Derivative_C, MarketData_InterestRate_C, \
+        MarketData_Index_C
+from .models import MarketData_Equity_Bloomberg_C, MarketData_Fixed_Income_Bloomberg_C, MarketData_Derivative_Bloomberg_C, \
+        MarketData_InterestRate_Bloomberg_C, MarketData_Index_Bloomberg_C
+from InstrumentDataManagement.models import Instrument, Instrumentsynonym, Codification,\
+    Marketdatatype
 
 # form imports
 from InstrumentDataManagement.forms import newMarketDataTypeForm
 from MarketDataManagement.forms import newGoldenRecordFieldForm, newDatasourceFieldForm, newFieldMappingForm
+import data_saving
 
 # Create your views here.
 def manageMapping(request, condition=''):
@@ -82,7 +91,7 @@ def newDatasourceField(request):
     if not form.save():
         return False
     
-def deactivateMapping(request, mapping_id=''):
+def changeMappingActivation(request, mapping_id=''):
     if request.method == 'GET':
         updatedMapping = MarketDataField_Mapping.objects.get(pk=mapping_id)
         if updatedMapping.valid_to_d is not None:
@@ -93,9 +102,12 @@ def deactivateMapping(request, mapping_id=''):
                 mapping.valid_to_d = datetime.now().date().strftime('%Y-%m-%d')
                 mapping.save()
             valid_to = None
+            valid_from = datetime.now().date().strftime('%Y-%m-%d')
         else:
             valid_to = datetime.now().date().strftime('%Y-%m-%d')
+            valid_from = updatedMapping.valid_from_d
         updatedMapping.valid_to_d = valid_to
+        updatedMapping.valid_from_d = valid_from
         updatedMapping.save()
         return redirect('MarketDataManagement:manageMapping')
     
@@ -107,18 +119,20 @@ def updateData(request, instrumentList=[]):
             fullData = request.POST['fullData']
         else:
             fullData = 'False'
-        currentInstrument = Instrumentsynonym.objects.filter(code_c=request.POST['currentInstrument'])[0]
-        fields, lastPriceDate = get_instrumentData(source, currentInstrument.instrument)
-        if fullData == 'True' or lastPriceDate is None:
-            lastPriceDate = '2000-01-01'
-        try:
-            priceData = get_PriceData(source, currentInstrument.code_c, fields, lastPriceDate)
-        
-            insert_instrumentData(currentInstrument.instrument, priceData, source)
+        instrumentSyns = Instrumentsynonym.objects.filter(code_c=request.POST['currentInstrument']).exclude(validity_d__isnull = True)
+        for instrumentSyn in instrumentSyns:
+            fields, lastPriceDate = get_instrumentData(source, instrumentSyn.instrument)
             
-            message = "update finished for:" + currentInstrument.instrument.name_c
-        except Exception as e:
-            message = "there was error updating:" + currentInstrument.instrument.name_c
+            if fullData == 'True' or lastPriceDate is None:
+                lastPriceDate = '2000-01-01'
+            try:
+                priceData = get_PriceData(source, instrumentSyn.code_c, fields, lastPriceDate)
+            
+                insert_instrumentData(instrumentSyn, priceData, source)
+                
+                message = "update finished for:" + instrumentSyn.instrument.name_c
+            except Exception as e:
+                message = "there was error updating:" + instrumentSyn.instrument.name_c
 
         return HttpResponse(message)
     elif request.method == 'POST':
@@ -138,9 +152,11 @@ def updateData(request, instrumentList=[]):
             instrumentList = Instrumentsynonym.objects.filter(
                                                               codification__name_c=request.POST['source'] + '_Ticker', 
                                                               code_c__in=selectedInstruments
-                                                              ).values(
-                                                                       'instrument_id', 'instrument__name_c', 'code_c'
-                                                                       ).annotate(max_validity_d=Max('validity_d'))
+                                                              ).exclude(
+                                                                            validity_d__isnull=True
+                                                                            ).values(
+                                                                                     'instrument_id', 'instrument__name_c', 'code_c'
+                                                                                     ).annotate(max_validity_d=Max('validity_d'))
             if 'fullData' in request.POST:
                 fullData = True
             else:
@@ -149,22 +165,28 @@ def updateData(request, instrumentList=[]):
             if(request.POST['source'] == 'DS'):
                 instrumentList = list(Instrumentsynonym.objects.filter(
                                                                   codification__name_c='DS_Ticker'
-                                                                  ).values(
-                                                                           'instrument_id', 'instrument__name_c', 'code_c'
-                                                                           ).annotate(max_validity_d=Max('validity_d')).all())
+                                                                  ).exclude(
+                                                                            validity_d__isnull=True
+                                                                            ).values(
+                                                                                     'instrument_id', 'instrument__name_c', 'code_c'
+                                                                                     ).annotate(max_validity_d=Max('validity_d')).all())
                 instrumentList.extend(list(Instrumentsynonym.objects.filter(
                                                                   Q(codification__name_c='DS_Code')
                                                                   ).exclude(
-                                                                            instrument__id__in=[instrument['instrument_id'] for instrument in instrumentList]
-                                                                            ).values(
-                                                                                       'instrument_id', 'instrument__name_c', 'code_c'
-                                                                                       ).annotate(max_validity_d=Max('validity_d'))))
+                                                                            validity_d__isnull=True
+                                                                            ).exclude(
+                                                                                      instrument__id__in=[instrument['instrument_id'] for instrument in instrumentList]
+                                                                                      ).values(
+                                                                                               'instrument_id', 'instrument__name_c', 'code_c'
+                                                                                               ).annotate(max_validity_d=Max('validity_d'))))
             elif request.POST['source'] == 'BBG':
                 instrumentList = list(Instrumentsynonym.objects.filter(
                                                                   codification__name_c='BBG_Ticker'
-                                                                  ).values(
-                                                                           'instrument_id', 'instrument__name_c', 'code_c'
-                                                                           ).annotate(max_validity_d=Max('validity_d')).all())
+                                                                  ).exclude(
+                                                                            validity_d__isnull=True
+                                                                            ).values(
+                                                                                     'instrument_id', 'instrument__name_c', 'code_c'
+                                                                                     ).annotate(max_validity_d=Max('validity_d')).all())
             fullData = False
         context = {
                    'source': request.POST['source'],
@@ -211,7 +233,12 @@ def updateData(request, instrumentList=[]):
             return render(request, 'MarketDataManagement/updateData.html', context)
 
 def get_instrumentFields(source, instrument):
-    fields = MarketDataField_Mapping.objects.filter(marketdatatype=instrument.marketdatatype, datasource_field__data_source_c=source).exclude(valid_to_d__isnull=False).values('datasource_field__name_c')
+    fields = MarketDataField_Mapping.objects.filter(
+                                                    marketdatatype=instrument.marketdatatype, 
+                                                    datasource_field__data_source_c=source
+                                                    ).exclude(
+                                                              valid_to_d__isnull=False
+                                                              ).values('datasource_field__name_c')
     return [ field['datasource_field__name_c'] for field in fields ]
 
 def get_instrumentData(source, instrument):
@@ -235,97 +262,283 @@ def get_instrumentData(source, instrument):
             if(instrument.marketdatatype.type_c == 'Equity'):
                 pricedate = MarketData_Equity_Bloomberg_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
             elif(instrument.marketdatatype.type_c == 'Fixed_Income'):
-                pricedate = MarketData_Fixed_Income_DataStream_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
+                pricedate = MarketData_Fixed_Income_Bloomberg_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
             elif(instrument.marketdatatype.type_c == 'InterestRate'):
-                pricedate = MarketData_InterestRate_DataStream_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
+                pricedate = MarketData_InterestRate_Bloomberg_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
             elif(instrument.marketdatatype.type_c == 'Derivative'):
-                pricedate = MarketData_Derivative_DataStream_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
+                pricedate = MarketData_Derivative_Bloomberg_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
             elif(instrument.marketdatatype.type_c == 'Index'):
-                pricedate = MarketData_Index_DataStream_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
+                pricedate = MarketData_Index_Bloomberg_C.objects.values_list('date').filter(instrument=instrument).aggregate(Max('date'))
             
         return fields, pricedate['date__max']
     except Exception as e:
         print("error reading instrument data, instrument:" + instrument.bbname + ",source:" + source)   
 
-def insert_instrumentData(instrument, priceData, source):
+def insert_instrumentData(instrumentSyn, priceData, source):
     if(source == 'DS'):
-        if(instrument.marketdatatype.type_c == 'Equity'):
+        if(instrumentSyn.instrument.marketdatatype.type_c == 'Equity'):
             priceDataTable = eval('MarketData_Equity_DataStream_C')
             goldenRecordTable = eval('MarketData_Equity_C')
-        elif(instrument.marketdatatype.type_c == 'Fixed_Income'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Fixed_Income'):
             priceDataTable = eval('MarketData_Fixed_Income_DataStream_C')
             goldenRecordTable = eval('MarketData_Fixed_Income_C')
-        elif(instrument.marketdatatype.type_c == 'InterestRate'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'InterestRate'):
             priceDataTable = eval('MarketData_InterestRate_DataStream_C')
             goldenRecordTable = eval('MarketData_InterestRate_C')
-        elif(instrument.marketdatatype.type_c == 'Derivative'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Derivative'):
             priceDataTable = eval('MarketData_Derivative_DataStream_C')
             goldenRecordTable = eval('MarketData_Derivative_C')
-        elif(instrument.marketdatatype.type_c == 'Index'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Index'):
             priceDataTable = eval('MarketData_Index_DataStream_C')
             goldenRecordTable = eval('MarketData_Index_C')
             
-        insert_data(instrument, priceData, priceDataTable, goldenRecordTable,source)
+        insert_data(instrumentSyn, priceData, priceDataTable, goldenRecordTable,source)
     elif(source == 'BBG'):
-        if(instrument.marketdatatype.type_c == 'Equity'):
+        if(instrumentSyn.instrument.marketdatatype.type_c == 'Equity'):
             priceDataTable = eval('MarketData_Equity_Bloomberg_C')
             goldenRecordTable = eval('MarketData_Equity_C')
-        elif(instrument.marketdatatype.type_c == 'Fixed_Income'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Fixed_Income'):
             priceDataTable = eval('MarketData_Fixed_Income_Bloomberg_C')
             goldenRecordTable = eval('MarketData_Fixed_Income_C')
-        elif(instrument.marketdatatype.type_c == 'InterestRate'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'InterestRate'):
             priceDataTable = eval('MarketData_InterestRate_Bloomberg_C')
             goldenRecordTable = eval('MarketData_InterestRate_C')
-        elif(instrument.marketdatatype.type_c == 'Derivative'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Derivative'):
             priceDataTable = eval('MarketData_Derivative_Bloomberg_C')
             goldenRecordTable = eval('MarketData_Derivative_C')
-        elif(instrument.marketdatatype.type_c == 'Index'):
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Index'):
             priceDataTable = eval('MarketData_Index_Bloomberg_C')
             goldenRecordTable = eval('MarketData_Index_C')
-        print('not supported')
+        insert_data(instrumentSyn, priceData, priceDataTable, goldenRecordTable,source)
         
-def insert_data(instrument, priceData, priceDataTable, goldenRecordTable, source):
+def insert_source_price_record(instrument, priceRecord, priceDataTable, price_date):
+    try:
+        # select data source price record
+        priceRecordDB = priceDataTable.objects.get(instrument=instrument, date=price_date.strftime('%Y-%m-%d'))
+        for key in priceRecord:
+            setattr(priceRecordDB, key, priceRecord[key])
+        # update data source price record
+        priceRecordDB.update(update_fields=priceRecord.keys())
+    except ObjectDoesNotExist as e:
+        try:
+            # insert into data source table
+            priceRecord.update({'instrument': instrument, 'date': price_date.strftime('%Y-%m-%d'), })
+            priceRecordDB = priceDataTable(**priceRecord)
+            priceRecordDB.save(force_insert=True)
+        except Exception as e1:
+            print("could not update or insert data for this instrument:" + instrument.name_c + ",on this date:" + price_date.strftime('%Y-%m-%d'))
+    except Exception as e:
+        print('Error inserting new data source record' + str(priceRecord))
+
+def update_future_golden_record(instrumentSyn, priceRecord, goldenRecordDB, price_date, update_fields, source):
+    # get the suffix of the instrument (Index, Comdty, ..etc)
+    instr_suffix = re.split(" ", instrumentSyn.code_c)[-1]
+    
+    # decides if any new instrument to be inserted if it is going to be active or not
+    if price_date.date() == datetime.now().date():
+        active = True
+    else:
+        active = False
+    
+    # try to find the current contract instrument
+    try:
+        current_contract_instrument = Instrumentsynonym.objects.get(code_c=priceRecord['fut_cur_gen_ticker']+" "+instr_suffix)
+        if active and current_contract_instrument.validity_d == None:
+            current_contract_instrument.validity_d = datetime.now().date()
+            current_contract_instrument.save()
+            # update the rest of synonyms that belong to this instrument
+            synonyms = Instrumentsynonym.objects.filter(instrument=current_contract_instrument.instrument)
+            for synonym in synonyms:
+                synonym.validity_d = datetime.now().date()
+                synonym.save()
+        current_contract_instrument = current_contract_instrument.instrument
+    except ObjectDoesNotExist as e:
+        current_contract_instrument = new_instrument(instrument_ticker=priceRecord['fut_cur_gen_ticker']+" "+instr_suffix, 
+                                                  ticker_type=source, 
+                                                  market_data_type='Contract Future',
+                                                  currency=instrumentSyn.instrument.currency, 
+                                                  underlying_curreny=instrumentSyn.instrument.underlying_currency,
+                                                  active = active)
+        
+    setattr(goldenRecordDB, 'current_contract_instrument', current_contract_instrument)
+    is_same, following_contract_instrument = is_same_contract(instrumentSyn.instrument, price_date.date(), current_contract_instrument)
+    if is_same:
+        synonyms = Instrumentsynonym.objects.filter(instrument=following_contract_instrument)
+        for synonym in synonyms:
+            if active and synonym.validity_d == None:
+                synonym.validity_d = datetime.now().date()
+                synonym.save()
+        setattr(goldenRecordDB, 'following_contract_instrument', following_contract_instrument)
+    else:
+        # try to find the following contract instrument
+        # get the prefix (eg from VG1 Index get VG1)
+        instr_prefix = re.split(" ", instrumentSyn.code_c)[0]
+        # get the second generic (eg from VG1 get VG2 Index)
+        sec_instr = instr_prefix.replace('1','2') + ' ' + instr_suffix
+        # get the current contract from bloomberg for the second generic
+        fut_contract = get_BBG_PriceData(sec_instr,['FUT_CUR_GEN_TICKER'], price_date, price_date)['fut_cur_gen_ticker'][0] + ' ' + instr_suffix
+        # find or create a new instrument with the current contract of the second generic
+        try:
+            following_contract_instrument = Instrumentsynonym.objects.get(code_c=fut_contract)
+            if active and following_contract_instrument.validity_d == None:
+                following_contract_instrument.validity_d = datetime.now().date()
+                following_contract_instrument.save()
+                # update the rest of synonyms that belong to this instrument
+                synonyms = Instrumentsynonym.objects.filter(instrument=following_contract_instrument.instrument)
+                for synonym in synonyms:
+                    synonym.validity_d = datetime.now().date()
+                    synonym.save()
+            following_contract_instrument = following_contract_instrument.instrument
+        except ObjectDoesNotExist as e:
+            following_contract_instrument = new_instrument(instrument_ticker=fut_contract, 
+                                                          ticker_type=source, 
+                                                          market_data_type='Contract Future',
+                                                          currency=instrumentSyn.instrument.currency, 
+                                                          underlying_curreny=instrumentSyn.instrument.underlying_currency,
+                                                          active=active)
+        setattr(goldenRecordDB, 'following_contract_instrument', following_contract_instrument)
+    update_fields.extend(["current_contract_instrument", "following_contract_instrument"])
+        # remove the fut_cur_gen_ticker from goldenRecord
+    return goldenRecordDB, update_fields
+
+def is_same_contract(instrument, current_date,  current_contract_instrument):    
+    try:
+        previous_record = MarketData_Derivative_C.objects.filter(instrument = instrument, date__lt = current_date).order_by('-date')[:1][0]
+        if previous_record.current_contract_instrument.id == current_contract_instrument.id:
+            return True, previous_record.following_contract_instrument
+        else:
+            return False, None
+    except (ObjectDoesNotExist, IndexError):
+        return False, None
+    except Exception:
+        return False, None
+    
+
+def new_future_golden_record(instrumentSyn, goldenRecord, price_date, source):
+    try:
+        # get the suffix of the instrument (Index, Comdty, ..etc)
+        instr_suffix = re.split(" ", instrumentSyn.code_c)[-1]
+        
+        # decides if any new instrument to be inserted if it is going to be active or not
+        if price_date.date() == datetime.now().date():
+            active = True
+        else:
+            active = False
+        
+        # try to find the current contract instrument
+        try:
+            current_contract_instrument = Instrumentsynonym.objects.get(code_c=goldenRecord['current_contract_instrument']+" "+instr_suffix)
+            if active and current_contract_instrument.validity_d == None:
+                current_contract_instrument.validity_d = datetime.now().date()
+                current_contract_instrument.save()
+                # update the rest of synonyms that belong to this instrument
+                synonyms = Instrumentsynonym.objects.filter(instrument=current_contract_instrument.instrument)
+                for synonym in synonyms:
+                    synonym.validity_d = datetime.now().date()
+                    synonym.save()
+            current_contract_instrument = current_contract_instrument.instrument
+        except ObjectDoesNotExist as e:
+            current_contract_instrument = new_instrument(instrument_ticker=goldenRecord['current_contract_instrument']+" "+instr_suffix, 
+                                                      ticker_type=source, 
+                                                      market_data_type='Contract Future',
+                                                      currency=instrumentSyn.instrument.currency, 
+                                                      underlying_curreny=instrumentSyn.instrument.underlying_currency,
+                                                      active = active)
+            
+        goldenRecord['current_contract_instrument'] = current_contract_instrument
+        is_same, following_contract_instrument = is_same_contract(instrumentSyn.instrument, price_date.date(), current_contract_instrument)
+        if is_same:
+            synonyms = Instrumentsynonym.objects.filter(instrument=following_contract_instrument)
+            for synonym in synonyms:
+                if active and synonym.validity_d == None:
+                    synonym.validity_d = datetime.now().date()
+                    synonym.save()
+            goldenRecord['following_contract_instrument'] = following_contract_instrument
+        else:
+            # try to find the following contract instrument
+            # get the prefix (eg from VG1 Index get VG1)
+            instr_prefix = re.split(" ", instrumentSyn.code_c)[0]
+            # get the second generic (eg from VG1 get VG2 Index)
+            sec_instr = instr_prefix.replace('1','2') + ' ' + instr_suffix
+            # get the current contract from bloomberg for the second generic
+            fut_contract = get_BBG_PriceData(sec_instr,['FUT_CUR_GEN_TICKER'], price_date, price_date)['fut_cur_gen_ticker'][0] + ' ' + instr_suffix
+            # find or create a new instrument with the current contract of the second generic
+            try:
+                following_contract_instrument = Instrumentsynonym.objects.get(code_c=fut_contract)
+                if active and following_contract_instrument.validity_d == None:
+                    following_contract_instrument.validity_d = datetime.now().date()
+                    following_contract_instrument.save()
+                    # update the rest of synonyms that belong to this instrument
+                    synonyms = Instrumentsynonym.objects.filter(instrument=following_contract_instrument.instrument)
+                    for synonym in synonyms:
+                        synonym.validity_d = datetime.now().date()
+                        synonym.save()
+                following_contract_instrument = following_contract_instrument.instrument
+            except ObjectDoesNotExist as e:
+                following_contract_instrument = new_instrument(instrument_ticker=fut_contract, 
+                                                              ticker_type=source, 
+                                                              market_data_type='Contract Future',
+                                                              currency=instrumentSyn.instrument.currency, 
+                                                              underlying_curreny=instrumentSyn.instrument.underlying_currency,
+                                                              active=active)
+            except Exception as e1:
+                pass
+            goldenRecord['following_contract_instrument'] = following_contract_instrument
+    except Exception as e:
+        pass
+        
+    return goldenRecord
+     
+def insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMapping, price_date, source):
+    try:
+        # select data source price record
+        goldenRecordDB = goldenRecordTable.objects.get(instrument=instrumentSyn.instrument, date=price_date.strftime('%Y-%m-%d'))
+        update_fields = []
+        for fieldPair in fieldMapping:
+            field_name = re.sub('[^0-9a-zA-Z_]+', '_', fieldPair.datasource_field.name_c.lower())
+            try:
+                setattr(goldenRecordDB, fieldPair.goldenrecord_field.name_c.lower(), priceRecord[field_name])
+                update_fields.append(fieldPair.goldenrecord_field.name_c.lower())
+            except ValueError as e:
+                pass
+        
+        if instrumentSyn.instrument.marketdatatype.id in [8,] and source == 'BBG': # if the instrument of type Future (Generic Future)
+            goldenRecordDB, update_fields = update_future_golden_record(instrumentSyn, priceRecord, goldenRecordDB, price_date, update_fields, source)
+        
+        # update the timestamp of the current day
+        if price_date.date() == datetime.now().date():
+            setattr(goldenRecordDB, 'time_t', datetime.now().time())
+            update_fields.append('time_t')
+            
+        # update golden record price record
+        goldenRecordDB.update(update_fields)
+    except ObjectDoesNotExist as e:
+        try:
+            # insert into golden record table 
+            # populate golden record dictionary
+            goldenRecord = {'instrument': instrumentSyn.instrument, 'date': price_date.strftime('%Y-%m-%d'), }
+            # update the timestamp of the current day
+            if price_date.date() == datetime.now().date():
+                goldenRecord['time_t'] = datetime.now().time()
+            for fieldPair in fieldMapping:
+                field_name = re.sub('[^0-9a-zA-Z_]+', '_', fieldPair.datasource_field.name_c.lower())
+                goldenRecord[fieldPair.goldenrecord_field.name_c.lower()] = priceRecord[field_name]
+            if instrumentSyn.instrument.marketdatatype.id in [8,] and source == 'BBG': # if the instrument of type Future (Generic Future)
+                goldenRecord = new_future_golden_record(instrumentSyn, goldenRecord, price_date, source)
+            goldenRecordDB = goldenRecordTable(**goldenRecord)
+            goldenRecordDB.save(force_insert=True)
+        except Exception as e1:
+            print("could not update or insert golden record data for this instrument:" + instrumentSyn.instrument.name_c + ",on this date:" + price_date.strftime('%Y-%m-%d'))
+    except Exception as e:
+        print('Error inserting new golden record' + instrumentSyn.instrument.name_c)
+        
+def insert_data(instrumentSyn, priceData, priceDataTable, goldenRecordTable, source):
     # select mapping
-    fieldMapping = MarketDataField_Mapping.objects.filter(marketdatatype=instrument.marketdatatype, valid_to_d__isnull=True, datasource_field__data_source_c=source)
+    fieldMapping = MarketDataField_Mapping.objects.filter(marketdatatype=instrumentSyn.instrument.marketdatatype, valid_to_d__isnull=True, datasource_field__data_source_c=source)
     for index, priceRecord in priceData.iterrows():
         priceRecord = priceRecord.to_dict()        
-        try:
-            # select data source price record
-            priceRecordDB = priceDataTable.objects.get(instrument=instrument, date=index.strftime('%Y-%m-%d'))
-            for key in priceRecord:
-                setattr(priceRecordDB, key, priceRecord[key])
-            # update data source price record
-            priceRecordDB.update(update_fields=priceRecord.keys())
-        except Exception as e:
-            try:
-                # insert into data source table
-                priceRecord.update({'instrument': instrument, 'date': index.strftime('%Y-%m-%d'), })
-                priceRecordDB = priceDataTable(**priceRecord)
-                priceRecordDB.save(force_insert=True)
-            except Exception as e1:
-                print("could not update or insert data for this instrument:" + instrument.name_c + ",on this date:" + index.strftime('%Y-%m-%d'))
+        insert_source_price_record(instrumentSyn.instrument, priceRecord, priceDataTable, index)
         
         # try to insert golden records only if there is at least one existing field mapping
         if(len(fieldMapping) > 0):
-            try:
-                # select data source price record
-                goldenRecordDB = goldenRecordTable.objects.get(instrument=instrument, date=index.strftime('%Y-%m-%d'))
-                update_fields = []
-                for fieldPair in fieldMapping:
-                    field_name = re.sub('[^0-9a-zA-Z_]+', '_', fieldPair.datasource_field.name_c.lower())
-                    setattr(goldenRecordDB, fieldPair.goldenrecord_field.name_c.lower(), priceRecord[field_name])
-                    update_fields.append(fieldPair.goldenrecord_field.name_c.lower())
-                # update golden record price record
-                goldenRecordDB.update(update_fields)
-            except Exception as e:
-                try:
-                    # insert into golden record table 
-                    # populate golden record dictionary
-                    goldenRecord = {'instrument': instrument, 'date': index.strftime('%Y-%m-%d'), }
-                    for fieldPair in fieldMapping:
-                        field_name = re.sub('[^0-9a-zA-Z_]+', '_', fieldPair.datasource_field.name_c.lower())
-                        goldenRecord[fieldPair.goldenrecord_field.name_c.lower()] = priceRecord[field_name]
-                    goldenRecordDB = goldenRecordTable(**goldenRecord)
-                    goldenRecordDB.save(force_insert=True)
-                except Exception as e1:
-                    print("could not update or insert golden record data for this instrument:" + instrument.name_c + ",on this date:" + index.strftime('%Y-%m-%d'))
+            insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMapping, index, source)

@@ -23,7 +23,7 @@
 			<td>{{ mapping.valid_from_d }}</td>
 			<td>{{ mapping.valid_to_d|default_if_none:"" }}</td>
 			<td>
-				<a href="{% url 'MarketDataManagement:deactivateMapping' mapping.id %}" class="button-link">
+				<a href="{% url 'MarketDataManagement:changeMappingActivation' mapping.id %}" class="button-link">
 				{% if mapping.valid_to_d == None %}
 					Deactivate
 				{% else %}
@@ -38,7 +38,7 @@
 	<script language="javascript" type="text/javascript">
 		var filter_config = 	{
 				paging: true,
-				paging_length: 10,
+				paging_length: 100,
 				rows_counter: true,
 				btn_reset: true,
 			};

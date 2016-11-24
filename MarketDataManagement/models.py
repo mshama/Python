@@ -7,7 +7,10 @@ from InstrumentDataManagement.models import Instrument, Market, Marketdatatype, 
 def createPriceUpdateStatment(obj, update_fields):
     sql = "UPDATE [" + obj._meta.db_table + "] SET "
     for field in update_fields:
-        sql = sql + obj._meta.get_field(field).column + '=' + str(getattr(obj, field)) + ','
+        if isinstance(obj._meta.get_field(field), models.ForeignKey):
+            sql = sql + obj._meta.get_field(field).column + "=" + str(getattr(obj, obj._meta.get_field(field).attname)) + ","
+        else:
+            sql = sql + obj._meta.get_field(field).column + "='" + str(getattr(obj, field)) + "',"
     sql = sql[:-1] + " WHERE date_d = '" + str(getattr(obj, 'date')) + "'"
     sql = sql + "AND Instrument_ID = " + str(getattr(obj, 'instrument').id)
     return sql
@@ -44,11 +47,15 @@ class MarketDataField_Mapping(models.Model):
     valid_from_d = models.DateField(db_column='valid_from_d')
     valid_to_d = models.DateField(db_column='valid_to_d', blank=True, null=True)
     
+    def __str__(self):
+        return "[" + self.goldenrecord_field.name_c + "],[" + self.datasource_field.name_c + "]"
+    
     class Meta:
         managed = False
         db_table = 'MarketDataField_Mapping'
         unique_together = (('goldenrecord_field', 'datasource_field','marketdatatype', 'valid_from_d', 'valid_to_d'),)
 
+# Datastream tables
 class MarketData_Equity_DataStream_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
@@ -143,11 +150,12 @@ class MarketData_Index_DataStream_C(models.Model):
         cursor.execute(sql)
         cursor.close()
         
+        
+# Bloomberg tables
 class MarketData_Equity_Bloomberg_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
-    p = models.DecimalField(db_column='P', max_digits=12, decimal_places=6)
-    p_ib = models.DecimalField(db_column='[P.IB]', max_digits=12, decimal_places=6)
+    px_last = models.DecimalField(db_column='PX_LAST', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
@@ -165,8 +173,8 @@ class MarketData_Equity_Bloomberg_C(models.Model):
 class MarketData_InterestRate_Bloomberg_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
-    dm = models.DecimalField(db_column='DM', max_digits=12, decimal_places=6)
-    ir = models.DecimalField(db_column='IR', max_digits=12, decimal_places=6)
+    px_last = models.DecimalField(db_column='PX_LAST', max_digits=12, decimal_places=6)
+    dur_adj_mid = models.DecimalField(db_column='DUR_ADJ_MID', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
@@ -184,7 +192,23 @@ class MarketData_InterestRate_Bloomberg_C(models.Model):
 class MarketData_Fixed_Income_Bloomberg_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
-    cmpm = models.DecimalField(db_column='CMPM', max_digits=12, decimal_places=6)
+    key_rate_dur_6mo = models.DecimalField(db_column='Key_Rate_Dur_6MO', max_digits=12, decimal_places=6)
+    key_rate_dur_1yr = models.DecimalField(db_column='Key_Rate_Dur_1YR', max_digits=12, decimal_places=6)
+    key_rate_dur_2yr = models.DecimalField(db_column='Key_Rate_Dur_2YR', max_digits=12, decimal_places=6)
+    key_rate_dur_3yr = models.DecimalField(db_column='Key_Rate_Dur_3YR', max_digits=12, decimal_places=6)
+    key_rate_dur_4yr = models.DecimalField(db_column='Key_Rate_Dur_4YR', max_digits=12, decimal_places=6)
+    key_rate_dur_5yr = models.DecimalField(db_column='Key_Rate_Dur_5YR', max_digits=12, decimal_places=6)
+    key_rate_dur_6yr = models.DecimalField(db_column='Key_Rate_Dur_6YR', max_digits=12, decimal_places=6)
+    key_rate_dur_7yr = models.DecimalField(db_column='Key_Rate_Dur_7YR', max_digits=12, decimal_places=6)
+    key_rate_dur_8yr = models.DecimalField(db_column='Key_Rate_Dur_8YR', max_digits=12, decimal_places=6)
+    key_rate_dur_9yr = models.DecimalField(db_column='Key_Rate_Dur_9YR', max_digits=12, decimal_places=6)
+    key_rate_dur_10yr = models.DecimalField(db_column='Key_Rate_Dur_10YR', max_digits=12, decimal_places=6)
+    key_rate_dur_15yr = models.DecimalField(db_column='Key_Rate_Dur_15YR', max_digits=12, decimal_places=6)
+    key_rate_dur_20yr = models.DecimalField(db_column='Key_Rate_Dur_20YR', max_digits=12, decimal_places=6)
+    key_rate_dur_25yr = models.DecimalField(db_column='Key_Rate_Dur_25YR', max_digits=12, decimal_places=6)
+    key_rate_dur_30yr = models.DecimalField(db_column='Key_Rate_Dur_30YR', max_digits=12, decimal_places=6)
+    dur_adj_oas_mid = models.DecimalField(db_column='DUR_ADJ_OAS_MID', max_digits=12, decimal_places=6)
+    px_last = models.DecimalField(db_column='PX_LAST', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
@@ -202,8 +226,8 @@ class MarketData_Fixed_Income_Bloomberg_C(models.Model):
 class MarketData_Derivative_Bloomberg_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
-    ps = models.DecimalField(db_column='PS', max_digits=12, decimal_places=6)
-    mp = models.DecimalField(db_column='MP', max_digits=12, decimal_places=6)
+    px_last = models.DecimalField(db_column='PX_LAST', max_digits=12, decimal_places=6)
+    fut_cur_gen_ticker = models.CharField(db_column='FUT_CUR_GEN_TICKER', max_length=50)
     
     class Meta:
         managed = False
@@ -221,8 +245,7 @@ class MarketData_Derivative_Bloomberg_C(models.Model):
 class MarketData_Index_Bloomberg_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
-    pi = models.DecimalField(db_column='PI', max_digits=12, decimal_places=6)
-    ri = models.DecimalField(db_column='RI', max_digits=12, decimal_places=6)
+    px_last = models.DecimalField(db_column='PX_LAST', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
@@ -236,13 +259,15 @@ class MarketData_Index_Bloomberg_C(models.Model):
         sql = createPriceUpdateStatment(self,update_fields)
         cursor.execute(sql)
         cursor.close()
-
+        
+        
+# Golden Record tables
 class MarketData_Equity_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
-    time_t = models.TimeField(db_column='time_t', auto_now=True)
+    time_t = models.TimeField(db_column='time_t')
     
     class Meta:
         managed = False
@@ -264,7 +289,7 @@ class MarketData_Derivative_C(models.Model):
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
     current_contract_instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='current_contract_instrument_id', related_name='current_contract_instr')
     following_contract_instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='following_contract_instrument_id', related_name='following_contract_instr')
-    time_t = models.TimeField(db_column='time_t', auto_now=True)
+    time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
     
     class Meta:
@@ -300,7 +325,7 @@ class MarketData_Fixed_Income_C(models.Model):
     key_rate_dur_25yr_n = models.DecimalField(db_column='Key_Rate_Dur_25YR_n', max_digits=12, decimal_places=6)
     key_rate_dur_30yr_n = models.DecimalField(db_column='Key_Rate_Dur_30YR_n', max_digits=12, decimal_places=6)
     effective_duration_n = models.DecimalField(db_column='Effective_Duration_n', max_digits=12, decimal_places=6)
-    time_t = models.TimeField(db_column='time_t', auto_now=True)
+    time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
         
     class Meta:
@@ -321,7 +346,7 @@ class MarketData_InterestRate_C(models.Model):
     date = models.DateField(db_column='date_d', primary_key=True)
     modified_duration_n = models.DecimalField(db_column='Modified_Duration_n', max_digits=12, decimal_places=6)
     interest_rate_n = models.DecimalField(db_column='Interest_Rate_n', max_digits=12, decimal_places=6)
-    time_t = models.TimeField(db_column='time_t', auto_now=True)
+    time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
     
     class Meta:
@@ -342,7 +367,7 @@ class MarketData_Index_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
-    time_t = models.TimeField(db_column='time_t', auto_now=True)
+    time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
     
     class Meta:

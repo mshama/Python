@@ -141,8 +141,11 @@ class Instrumentsynonym(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     codification = models.ForeignKey(Codification, models.DO_NOTHING, db_column='Codification_ID')  # Field name made lowercase.
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
-    validity_d = models.DateField(db_column='Validity_D')  # Field name made lowercase.
+    validity_d = models.DateField(db_column='Validity_D', blank=True, null=True)  # Field name made lowercase.
     code_c = models.CharField(db_column='Code_C', max_length=50)  # Field name made lowercase.
+
+    def __str__(self):
+        return self.code_c
 
     class Meta:
         managed = False
