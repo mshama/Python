@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 # import pandas as pd
 from _datetime import datetime
 import re
+import numpy as np
 
 # own libraries
 from dataconnections.datasource import get_PriceData, get_static_BBG,\
@@ -32,6 +33,13 @@ from InstrumentDataManagement.models import Instrument, Instrumentsynonym, Codif
 from InstrumentDataManagement.forms import newMarketDataTypeForm
 from MarketDataManagement.forms import newGoldenRecordFieldForm, newDatasourceFieldForm, newFieldMappingForm
 import data_saving
+
+def price2LogRet(price1, price2):
+    try:
+        r = np.log(price1/price2)
+        return r
+    except Exception:
+        return None
 
 # Create your views here.
 def manageMapping(request, condition=''):
@@ -353,7 +361,7 @@ def update_future_golden_record(instrumentSyn, priceRecord, goldenRecordDB, pric
                 synonym.save()
         current_contract_instrument = current_contract_instrument.instrument
     except ObjectDoesNotExist as e:
-        current_contract_instrument = new_instrument(instrument_ticker=priceRecord['fut_cur_gen_ticker']+" "+instr_suffix, 
+        current_contract_instrument, _ = new_instrument(instrument_ticker=priceRecord['fut_cur_gen_ticker']+" "+instr_suffix, 
                                                   ticker_type=source, 
                                                   market_data_type='Contract Future',
                                                   currency=instrumentSyn.instrument.currency, 
@@ -390,7 +398,7 @@ def update_future_golden_record(instrumentSyn, priceRecord, goldenRecordDB, pric
                     synonym.save()
             following_contract_instrument = following_contract_instrument.instrument
         except ObjectDoesNotExist as e:
-            following_contract_instrument = new_instrument(instrument_ticker=fut_contract, 
+            following_contract_instrument, _ = new_instrument(instrument_ticker=fut_contract, 
                                                           ticker_type=source, 
                                                           market_data_type='Contract Future',
                                                           currency=instrumentSyn.instrument.currency, 
@@ -438,7 +446,7 @@ def new_future_golden_record(instrumentSyn, goldenRecord, price_date, source):
                     synonym.save()
             current_contract_instrument = current_contract_instrument.instrument
         except ObjectDoesNotExist as e:
-            current_contract_instrument = new_instrument(instrument_ticker=goldenRecord['current_contract_instrument']+" "+instr_suffix, 
+            current_contract_instrument, _ = new_instrument(instrument_ticker=goldenRecord['current_contract_instrument']+" "+instr_suffix, 
                                                       ticker_type=source, 
                                                       market_data_type='Contract Future',
                                                       currency=instrumentSyn.instrument.currency, 
@@ -475,7 +483,7 @@ def new_future_golden_record(instrumentSyn, goldenRecord, price_date, source):
                         synonym.save()
                 following_contract_instrument = following_contract_instrument.instrument
             except ObjectDoesNotExist as e:
-                following_contract_instrument = new_instrument(instrument_ticker=fut_contract, 
+                following_contract_instrument, _ = new_instrument(instrument_ticker=fut_contract, 
                                                               ticker_type=source, 
                                                               market_data_type='Contract Future',
                                                               currency=instrumentSyn.instrument.currency, 
@@ -489,7 +497,7 @@ def new_future_golden_record(instrumentSyn, goldenRecord, price_date, source):
         
     return goldenRecord
      
-def insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMapping, price_date, source):
+def insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMapping, price_date, source, previous_price):
     try:
         # select data source price record
         goldenRecordDB = goldenRecordTable.objects.get(instrument=instrumentSyn.instrument, date=price_date.strftime('%Y-%m-%d'))
@@ -509,9 +517,20 @@ def insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMap
         if price_date.date() == datetime.now().date():
             setattr(goldenRecordDB, 'time_t', datetime.now().time())
             update_fields.append('time_t')
-            
+        if previous_price:
+            if source == 'DS':
+                goldenRecordDB.eod_log_return_n = price2LogRet(float(goldenRecordDB.eod_price_n), previous_price)
+                update_fields.append('eod_log_return_n')
+            elif source == 'BBG':
+                goldenRecordDB.intra_log_return_n = price2LogRet(float(goldenRecordDB.intraday_price_n), previous_price)
+                update_fields.extend(['intra_log_return_n'])
         # update golden record price record
         goldenRecordDB.update(update_fields)
+        
+        if source == 'DS':
+            return float(goldenRecordDB.eod_price_n)
+        elif source == 'BBG':
+            return float(goldenRecordDB.intraday_price_n)
     except ObjectDoesNotExist as e:
         try:
             # insert into golden record table 
@@ -525,8 +544,21 @@ def insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMap
                 goldenRecord[fieldPair.goldenrecord_field.name_c.lower()] = priceRecord[field_name]
             if instrumentSyn.instrument.marketdatatype.id in [8,] and source == 'BBG': # if the instrument of type Future (Generic Future)
                 goldenRecord = new_future_golden_record(instrumentSyn, goldenRecord, price_date, source)
+            
+            
+            if previous_price:
+                if source == 'DS':
+                    goldenRecord['eod_log_return_n'] = price2LogRet(float(goldenRecord['eod_price_n']), previous_price)
+                elif source == 'BBG':
+                    goldenRecord['intra_log_return_n'] = price2LogRet(float(goldenRecord['intraday_price_n']), previous_price)
+            
             goldenRecordDB = goldenRecordTable(**goldenRecord)
+                
             goldenRecordDB.save(force_insert=True)
+            if source == 'DS':
+                return float(goldenRecordDB.eod_price_n)
+            elif source == 'BBG':
+                return float(goldenRecordDB.intraday_price_n)
         except Exception as e1:
             print("could not update or insert golden record data for this instrument:" + instrumentSyn.instrument.name_c + ",on this date:" + price_date.strftime('%Y-%m-%d'))
     except Exception as e:
@@ -535,10 +567,11 @@ def insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMap
 def insert_data(instrumentSyn, priceData, priceDataTable, goldenRecordTable, source):
     # select mapping
     fieldMapping = MarketDataField_Mapping.objects.filter(marketdatatype=instrumentSyn.instrument.marketdatatype, valid_to_d__isnull=True, datasource_field__data_source_c=source)
+    previous_price = None
     for index, priceRecord in priceData.iterrows():
-        priceRecord = priceRecord.to_dict()        
+        priceRecord = priceRecord.to_dict()
         insert_source_price_record(instrumentSyn.instrument, priceRecord, priceDataTable, index)
         
         # try to insert golden records only if there is at least one existing field mapping
         if(len(fieldMapping) > 0):
-            insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMapping, index, source)
+            previous_price = insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMapping, index, source, previous_price)

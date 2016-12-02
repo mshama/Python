@@ -1,0 +1,26 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% load staticfiles %}
+	{% include 'ManualUpload/includes.html' %}
+	{% if successMessage %}
+		<div class="successMessages">{{ successMessage | default_if_none:"" }}</div>
+	{% endif %}
+	<form method="post" id="uploadForm" action="{% url 'ManualUpload:uploadData' %}" enctype="multipart/form-data">
+	    {% csrf_token %}
+	    {{ uploadForm.as_p }}
+	     
+	    *Acctepted formats are xls, xlsx, csv
+	    <br /> 
+	    **File must contain columns: code(Column Name is the code type), MarketDataType
+	    <br />
+	    **File may contain optional columns: currency, underlying currency, market
+	    <br /> 
+	    <input name="uploadData" type="submit" value="Upload" />
+	</form>
+	{% if errorMessages %}
+		{% for message in errorMessages %}
+			<div class="errorMessages">{{ message | default_if_none:"" }}</div>
+		{% endfor %}
+	{% endif %}
+	
+{% endblock %}

@@ -231,6 +231,14 @@ def get_bond_metaData(instrument):
                 }
 
 def get_DS_PriceData(instrument, fields, lastPriceDate):
+    '''
+    
+    @param instrument: instrument datastream ticker 
+    @param fields: fields that needs to be read from datastream
+    @param lastPriceDate: last date existing for this instrument in the database
+    
+    @return: price data from the lastPriceDate till current date
+    '''
     DWE = create_DataStreamConnection();
     try:
         priceData = DWE.fetch(instrument,
@@ -271,6 +279,15 @@ def get_DS_PriceData(instrument, fields, lastPriceDate):
     return priceData
 
 def get_BBG_PriceData(instrument, fields, lastPriceDate, end_date = datetime.now()):
+    '''
+    
+    @param instrument: instrument: instrument Bloomberg ticker
+    @param fields: fields that needs to be read from datastream
+    @param lastPriceDate: last date existing for this instrument in the database
+    @param end_date: the end of the date interval. Default value is current date
+    
+    @return: price data from the lastPriceDate till current date
+    '''
     from xmlrpc import client
         
     proxy = client.ServerProxy('http://192.168.100.20:8080')

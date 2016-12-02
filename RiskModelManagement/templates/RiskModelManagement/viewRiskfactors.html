@@ -1,0 +1,21 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+{% include 'RiskModelManagement/includes.html' %}
+<form method='POST' id ='chooseRiskfactor-form' action="{% url 'RiskModelManagement:viewRiskfactor'%}">
+	{% csrf_token %}
+	Sort by:
+	<select name="sortBy" id="sortBy" onchange="sortRiskfactors()">
+	   <option value="id">ID</option>
+	   <option value="name">Name</option>
+	</select>
+	<br><br>
+	<select name="riskfactorList" id="riskfactorList" size="20" style="width: 600px;overflow:auto">
+    {% for riskfactor in riskfactors %}
+		<option value="{{ riskfactor.id }}">{{ riskfactor.riskfactorinstrument.name_c }}</option>
+	{% endfor %}
+	</select>
+	<br><br>
+	<input type='submit' name="showRiskfactorDetails" value='Show riskfactor details'/>
+	<a class='button-link' href="{% url 'RiskModelManagement:addRiskfactor'%}">Add new riskfactor</a>
+</form>
+{% endblock %}

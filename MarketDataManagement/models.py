@@ -98,6 +98,7 @@ class MarketData_Fixed_Income_DataStream_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     cmpm = models.DecimalField(db_column='CMPM', max_digits=12, decimal_places=6)
+    gp = models.DecimalField(db_column='GP', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
@@ -209,6 +210,7 @@ class MarketData_Fixed_Income_Bloomberg_C(models.Model):
     key_rate_dur_30yr = models.DecimalField(db_column='Key_Rate_Dur_30YR', max_digits=12, decimal_places=6)
     dur_adj_oas_mid = models.DecimalField(db_column='DUR_ADJ_OAS_MID', max_digits=12, decimal_places=6)
     px_last = models.DecimalField(db_column='PX_LAST', max_digits=12, decimal_places=6)
+    px_dirty_bid = models.DecimalField(db_column='PX_DIRTY_BID', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
@@ -267,6 +269,8 @@ class MarketData_Equity_C(models.Model):
     date = models.DateField(db_column='date_d', primary_key=True)
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     time_t = models.TimeField(db_column='time_t')
     
     class Meta:
@@ -291,6 +295,8 @@ class MarketData_Derivative_C(models.Model):
     following_contract_instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='following_contract_instrument_id', related_name='following_contract_instr')
     time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     
     class Meta:
         managed = False
@@ -309,6 +315,7 @@ class MarketData_Fixed_Income_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
+    eod_price_dirty_n = models.DecimalField(db_column='EOD_Price_Dirty_n', max_digits=12, decimal_places=6)
     key_rate_dur_6mo_n = models.DecimalField(db_column='Key_Rate_Dur_6Mo_n', max_digits=12, decimal_places=6)
     key_rate_dur_1yr_n = models.DecimalField(db_column='Key_Rate_Dur_1YR_n', max_digits=12, decimal_places=6)
     key_rate_dur_2yr_n = models.DecimalField(db_column='Key_Rate_Dur_2YR_n', max_digits=12, decimal_places=6)
@@ -327,6 +334,8 @@ class MarketData_Fixed_Income_C(models.Model):
     effective_duration_n = models.DecimalField(db_column='Effective_Duration_n', max_digits=12, decimal_places=6)
     time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
         
     class Meta:
         managed = False
@@ -345,9 +354,10 @@ class MarketData_InterestRate_C(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     modified_duration_n = models.DecimalField(db_column='Modified_Duration_n', max_digits=12, decimal_places=6)
-    interest_rate_n = models.DecimalField(db_column='Interest_Rate_n', max_digits=12, decimal_places=6)
     time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
+    eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
     
     class Meta:
         managed = False
@@ -369,6 +379,8 @@ class MarketData_Index_C(models.Model):
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
     time_t = models.TimeField(db_column='time_t')
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     
     class Meta:
         managed = False
@@ -395,6 +407,8 @@ class MarketData_Equity_VW(models.Model):
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
     time_t = models.TimeField(db_column='time_t', blank=True, null=True)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     
     class Meta:
         managed = False
@@ -410,6 +424,8 @@ class MarketData_Derivative_VW(models.Model):
     following_contract_instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='[following_contract_instrument_id]', related_name='following_contract_instr_vw')
     time_t = models.TimeField(db_column='time_t', auto_now=True)
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     
     class Meta:
         managed = False
@@ -420,6 +436,7 @@ class MarketData_Fixed_Income_VW(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
+    eod_price_dirty_n = models.DecimalField(db_column='EOD_Price_Dirty_n', max_digits=12, decimal_places=6)
     key_rate_dur_6mo_n = models.DecimalField(db_column='Key_Rate_Dur_6Mo_n', max_digits=12, decimal_places=6)
     key_rate_dur_1yr_n = models.DecimalField(db_column='Key_Rate_Dur_1YR_n', max_digits=12, decimal_places=6)
     key_rate_dur_2yr_n = models.DecimalField(db_column='Key_Rate_Dur_2YR_n', max_digits=12, decimal_places=6)
@@ -438,6 +455,8 @@ class MarketData_Fixed_Income_VW(models.Model):
     effective_duration_n = models.DecimalField(db_column='Effective_Duration_n', max_digits=12, decimal_places=6)
     time_t = models.TimeField(db_column='time_t', auto_now=True)
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     
         
     class Meta:
@@ -449,9 +468,10 @@ class MarketData_InterestRate_VW(models.Model):
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
     date = models.DateField(db_column='date_d', primary_key=True)
     modified_duration_n = models.DecimalField(db_column='Modified_Duration_n', max_digits=12, decimal_places=6)
-    interest_rate_n = models.DecimalField(db_column='Interest_Rate_n', max_digits=12, decimal_places=6)
+    eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
     time_t = models.TimeField(db_column='time_t', auto_now=True)
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     
     class Meta:
         managed = False
@@ -464,6 +484,8 @@ class MarketData_Index_VW(models.Model):
     eod_price_n = models.DecimalField(db_column='EOD_Price_n', max_digits=12, decimal_places=6)
     time_t = models.TimeField(db_column='time_t', auto_now=True)
     intraday_price_n = models.DecimalField(db_column='Intraday_Price_n', max_digits=12, decimal_places=6)
+    eod_log_return_n = models.FloatField(db_column='EOD_Log_Return_N')
+    intra_log_return_n = models.FloatField(db_column='Intra_Log_Return_N')
     
     class Meta:
         managed = False

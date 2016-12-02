@@ -1,0 +1,16 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% include 'PortfolioPositionManagement/includes.html' %}
+	{% include 'PortfolioPositionManagement/addMandate.html' %}
+	<div class='mandate-div-list'>
+		<ul class='mandates-list'>		
+			{% for mandate in mandates %}
+			<li>
+				{{ mandate.name_c }}
+			</li>
+			{% endfor %}
+		</ul>
+	</div>
+	<br>
+	<a href="#" onclick="overlayClick('mandate-overlay')" class='button-link'>New mandate</a>
+{% endblock %}

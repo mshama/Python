@@ -25,8 +25,8 @@
 									<a href="#">Monthly Report</a>
 									<div class="dropdown-submenu-content">
 										<ul class="dropdown-submenu-list">
-											<li><a href="#">QELV</a></li>
-											<li><a href="#">Report 2</a></li>
+											<li><a href="{% url 'Reporting:QELV' %}">QELV</a></li>
+											<li><a href="{% url 'Reporting:KINI' %}">KINI</a></li>
 										</ul>
 									</div>
 								</li>
@@ -79,13 +79,55 @@
 						<div class="dropdown-content">
 							<ul class="dropdown-menu-list">
 								<li class="dropdown-menu">
-									<a href="#">View Transactions</a>						
+									<a href="{% url 'PortfolioPositionManagement:viewPortfolios'%}">View portfolios</a>						
 								</li>
 								<li class="dropdown-menu">
-									<a href="#">Add Transactions</a>						
+									<a href="{% url 'PortfolioPositionManagement:viewMandates'%}">View Mandates</a>						
 								</li>
 								<li class="dropdown-menu">
-									<a href="#">View Positions</a>						
+									<a href="#">Add transactions</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="#">View positions</a>						
+								</li>
+							</ul>
+						</div>
+					</li>
+					<li class="dropdown">
+						<a href="#">Risk Model Management</a>
+						<div class="dropdown-content">
+							<ul class="dropdown-menu-list">
+								<li class="dropdown-menu">
+									<a href="{% url 'RiskModelManagement:viewRiskfactors'%}">View risk factors</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="{% url 'RiskModelManagement:addRiskfactor'%}">Add risk factor</a>						
+								</li>
+							</ul>
+						</div>
+					</li>
+					<li class="dropdown">
+						<a href="#">User Management</a>
+						<div class="dropdown-content">
+							<ul class="dropdown-menu-list">
+								<li class="dropdown-menu">
+									<a href="#">View Users</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="#">View Functions</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="#">View Profiles</a>						
+								</li>
+							</ul>
+						</div>
+					</li>
+					<li class="dropdown">
+						<a href="#">Other</a>
+						<div class="dropdown-content">
+							<ul class="dropdown-menu-list">
+								<li class="dropdown-menu">
+									<a href="{% url 'ManualUpload:uploadData'%}">Upload data</a>						
 								</li>
 							</ul>
 						</div>

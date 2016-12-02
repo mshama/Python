@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<head>
+	{% load staticfiles %}
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type="text/javascript" src="{% static 'Reporting/js/Chart.js-2.1.6/dist/Chart.bundle.js' %}"></script>
+	<script type="text/javascript" src="{% static 'Reporting/js/chartist-js-develop/dist/chartist.min.js' %}"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/numeral.js/1.4.5/numeral.min.js"></script>
+	<script type="text/javascript">		
+		var es50_p = {{ ES50_P|safe }};
+		var qelv_p = {{ QELV_P|safe }};
+		var dateArray = {{ dateArray|safe }};
+	</script>
+	<script type="text/javascript">
+		var vola_annualisiert = {{ vola_annualisiert|safe }};
+		var performace_Auflage = {{ performace_Auflage|safe }};
+		
+		var endIndex = {{ idxMnthEnd }};
+		var endYearIndex = {{ idxLstYrEnd }};
+		
+		var spread = {{spread}};
+	</script>
+	<script type="text/javascript">
+		var marketexposureData = {{ marketExposureHistoryData|safe }};
+		var marketexposureDates = {{ marketExposureHistoryDates|safe }};
+	</script>
+	<script type="text/javascript"  src="{% static 'Reporting/js/scripts.js' %}"></script>
+	<script type="text/javascript">
+			
+		window.onload = init;
+		
+	</script> 
+	<title>Monthly Report {{ reportDate|date:"M Y" }}</title>
+</head>
+
+<link rel="stylesheet" type="text/css" href="{% static 'Reporting/css/style.css' %}" />
+<body>
+<a href="{% url 'home:index' %}" class="back-link">Back to home</a>
+<div class="page">
+	<div >
+		<div class="center">
+			<h3>
+		    	<img src="{% static 'Reporting/images/qc_logo.png' %}" alt="Quant Capital Management" height="40px" width="150px"/>
+			</h3>
+		</div>
+	</div>
+	<div class="center">
+		<h2>Quant.Euro Long Variable - Wertentwicklung im {{ reportDate }}</h2>
+	</div>
+	<table>
+		<tr align="center">
+			<td>
+				<table class="performance_risiko_table">
+					<tbody>
+						<tr>
+							<td valign="top">
+								<table class="performaceRisiko">
+									<thead>
+										<tr>
+											<th class="center_table_element"></th>
+											<th class="center_table_element">Fonds (%)*</th>
+											<th class="center_table_element">Index (%)</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<th>Performance 1 Monat</th>
+											<td class="center_table_element">{{ performance_Monat.1 |floatformat:1 }}%</td>
+											<td class="center_table_element">{{ performance_Monat.0 |floatformat:1 }}%</td>
+										</tr>
+										<tr>
+											<th>Performance YTD</th>
+											<td class="center_table_element">{{ performance_YTD.1 |floatformat:1 }}%</td>
+											<td class="center_table_element">{{ performance_YTD.0 |floatformat:1 }}%</td>
+										</tr>
+										<tr>
+											<th>Performance seit Auflage</th>
+											<td class="center_table_element">{{ performace_Auflage.1 |floatformat:1 }}%</td>
+											<td class="center_table_element">{{ performace_Auflage.0 |floatformat:1 }}%</td>
+										</tr>
+										<tr>
+											<th>Volatilität</th>
+											<td class="center_table_element">{{ vola_annualisiert.1 |floatformat:1 }}%</td>
+											<td class="center_table_element">{{ vola_annualisiert.0 |floatformat:1 }}%</td>
+										</tr>
+										<tr>
+											<th>Max. Drawdown</th>
+											<td class="center_table_element">{{ max_drawdown.1 |floatformat:1 }}%</td>
+											<td class="center_table_element">{{ max_drawdown.0 |floatformat:1 }}%</td>
+										</tr>										
+									</tbody>
+								</table> <br/>
+								<div>*Bewertung des Fonds mit t+1</div>
+							</td>
+							<td valign="top">
+								<table class="performaceRisiko">
+									<thead>
+										<tr>
+											<th class="center_table_element"></th>
+											<th class="center_table_element">seit Auflage*</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<th>Beta</th>
+											<td class="center_table_element">{{ beta.1 |floatformat:1 }}</td>
+										</tr>
+										<tr>
+											<th>Korrelation</th>
+											<td class="center_table_element">{{ korrelation.1 |floatformat:1 }}</td>
+										</tr>
+										<tr>
+											<th>Tracking Error</th>
+											<td class="center_table_element">{{ tracking_error.1 |floatformat:1 }}%</td>
+										</tr>
+										<tr>
+											<th>Winner/Loser ggü. Index</th>
+											<td class="center_table_element">{{ winner_prozent.1 |floatformat:1 }}% / {{ loser_prozent.1 |floatformat:1 }}%</td>
+										</tr>
+										<tr>
+											<th>Upside/Downside Capture</th>
+											<td class="center_table_element">{{ upside_capture.1 |floatformat:1 }}% / {{ downside_capture.1 |floatformat:1 }}%</td>
+										</tr>
+										<tr>
+											<th>NAV je Anteil</th>
+											<td class="center_table_element">{{ net_asset_value.1 |floatformat:2 }} €</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div id="middle-section">
+					<table class="middle_section_table">
+						<thead>
+							<tr>
+								<th width='50%'><h3>Fondsperformance YTD</h3></th>
+								<th width='50%'><h3>Bericht des Portofoliomanagements:</h3></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td width='50%' valign="top">
+									<canvas id="fondsperformance-ytd-chart"  height='50%' width='50%'>
+									</canvas>
+								</td>
+								<td width='50%' valign="top">
+									<p id="manager-kommentar">{{ manager_kommentar }}</p>
+								</td>
+							</tr>
+						</tbody>			
+					</table>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div id="lower-section">
+					<canvas id="rendite-risiko-chart">
+					</canvas>
+					<div id="rendite-legend"></div>
+				</div>				
+			</td>
+		</tr>
+	</table>
+</div><!-- end of page 1 -->
+<div class="page">
+	<div >
+		<div class="center">
+			<h3>
+		    	<img src="{% static 'Reporting/images/qc_logo.png' %}" alt="Quant Capital Management"  height="40px" width="150px"/>
+			</h3>
+		</div>
+	</div>
+	<div>
+		<table class='page2-table' >
+			<tbody>
+				<tr align="center">
+					<td>
+						<div>					
+							<table class="month-performance">
+								<tbody>
+									<tr>
+										<th></th><th>Jan.</th><th>Feb.</th><th>Mrz.</th><th>Apr.</th><th>Mai.</th><th>Juni</th>
+										<th>Juli</th><th>Aug.</th><th>Sep.</th><th>Okt.</th><th>Nov.</th><th>Dez.</th><th>YTD</th>
+									</tr>							
+									<tr id="fonds-previous-year">
+										<th>{{currentYear|add:-1}} - Fonds</th>
+									</tr>
+									<tr id="index-previous-year">
+										<th>{{currentYear|add:-1}} - Outperformance</th>
+									</tr>
+									<tr id="fonds-current-year">
+										<th>{{currentYear}} - Fonds</th>
+									</tr>
+									<tr id="index-current-year">
+										<th>{{currentYear}} - Outperformance</th>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<script type="text/javascript">
+							monatsrenditen = {{ monatsrenditen }};
+							currentYear = {{ currentYear }};
+							
+							fill_month_performance();
+							
+						</script>
+					</td>
+				</tr>
+				<tr align="center">
+					<td>
+						<div id='performancedifferenz'  class='page2-chart'>
+							<canvas id="performancedifferenz-chart"></canvas>
+						</div>
+					</td>
+				</tr>
+				<tr align="center">
+					<td>
+						<div id='qelv-marketexposure' class='page2-chart ct-chart ct-golden-section'>
+							<canvas id="qelv-marketexposure-chart"></canvas>
+						</div>	
+					</td>
+				</tr>
+				<tr align="center">
+					<td>
+						<div id='fondsperformance-seit-auflage' class='page2-chart'>
+							<canvas id="fondsperformance-seit-auflage-chart"></canvas>
+						</div>	
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div><!-- end of page 2 -->
+</body>

@@ -1,0 +1,80 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% load staticfiles %}
+	{% include 'RiskModelManagement/includes.html' %}
+	{% include 'RiskModelManagement/editRiskfactorMapping.html' %}
+	{% include 'RiskModelManagement/editRiskfactorComposition.html' %}
+	{% include 'RiskModelManagement/editRiskfactor.html' %}
+	<div id='main-data'>
+		<table>
+			<tr>
+				<th style="text-align:left">
+					Riskfactor:
+				</th>
+				<td style="text-align:left">
+					{{ riskfactor.riskfactorinstrument }}
+				</td>
+				<th style="text-align:right">
+					Hedge instrument:
+				</th>
+				<td style="text-align:right">
+					{{ riskfactor.hedgeinstrument | default_if_none:"" }}
+				</td>
+				<td style="text-align:right">
+					<a href="#" onclick="overlayClick('edit-riskfactor-overlay')">
+						<img src="{% static 'home/images/edit.png' %}"/>
+					</a>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<hr>
+	<div id='composition-data'>
+		<table id='riskfactor-composition-table'>
+			<tr>
+				<th style="text-align:left">Riskfactor component</th>
+				<th style="text-align:right">Weight</th>
+				<td style="text-align:right">
+					<a href="#" onclick="overlayClick('edit-composition-overlay')">
+						<img src="{% static 'home/images/edit.png' %}"/>
+					</a>
+				</td>				
+			</tr>
+		{% for risk_element in riskfactor_composition %}
+			<tr>
+				<td style="text-align:left">
+					{{ risk_element.riskfactor.riskfactorinstrument }}
+				</td>
+				<td style="text-align:right">
+					{{ risk_element.weight_n }}
+				</td>
+			</tr>
+		{% endfor %}
+		</table>
+	</div>
+	<hr>
+	<div id='mapping-data'>
+		<table>
+			<tr>
+				<th style="text-align:left">Mandate</th>
+				<th style="text-align:right">Instrument</th>
+				<td style="text-align:right">
+					<a href="#" onclick="overlayClick('edit-mapping-overlay')">
+						<img src="{% static 'home/images/edit.png' %}"/>
+					</a>
+				</td>
+			</tr>
+		{% for mapping_element in riskfactor_mapping %}
+			<tr>
+				<td style="text-align:left">
+					{{ mapping_element.mandate }}
+				</td>
+				<td style="text-align:right">
+					{{ mapping_element.reference_instrument }}
+				</td>
+			</tr>
+		{% endfor %}
+		</table>
+		
+	</div>
+{% endblock %}

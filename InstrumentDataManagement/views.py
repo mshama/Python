@@ -23,6 +23,9 @@ from .models import Instrument, Instrumentsynonym, Country, Codification,\
 # forms import
 from .forms import newMarketDataTypeForm,newMarketForm,newInstrumentForm,\
     newCountryForm, newCurrencyForm, newAssetClassForm, instrumentAssetClassMapping, newInstrumentSynonymForm
+from misc.email import send_email
+from PortfolioPositionManagement.models import Investment
+from data_saving.saving_functions import new_instrument
 
 # Create your views here.
 
@@ -107,136 +110,22 @@ def insertInstruments(request):
     when a new instrument is inserted from the UI we don't check if it already exists
     we try to read the meta data for it and insert it as a new instrument
     """
+    bbg_errorMsg = []
+    ds_errorMsg = []
+    
     form = newInstrumentForm(request.POST)
     if form.is_valid():
         instrumentCodes = form.cleaned_data['names'].split('\r\n')
         market = form.cleaned_data['market'].iso_code_c if form.cleaned_data['market'] != None else None
         for instrumentCode in instrumentCodes:
-            # first read the meta data 
-            if form.cleaned_data['source'] == 'DS':
-                instrument_metaData_DS = get_metaData(instrumentCode, form.cleaned_data['source'])
-                instrument_metaData_BBG = get_metaData_ISIN(instrument_metaData_DS['ISIN'], form.cleaned_data['marketdatatype'].type_c, market)
-                try:
-                    # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
-                    inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_BBG['BBG_Ticker'])
-                    if inst_syn.instrument.marketdatatype.name_c == form.cleaned_data['marketdatatype'].name_c:
-                        return
-                except ObjectDoesNotExist as e:
-                    pass
-            elif form.cleaned_data['source'] == 'BBG':
-                try:
-                    # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
-                    Instrumentsynonym.objects.get(code_c=instrumentCode)
-                    return
-                except ObjectDoesNotExist as e:
-                    # otherwise read the meta data from bloomberg and datastream
-                    instrument_metaData_BBG = get_metaData(instrumentCode, form.cleaned_data['source'], form.cleaned_data['marketdatatype'].type_c)
-                    instrument_metaData_DS = get_metaData(instrument_metaData_BBG['ISIN'], 'DS')
-            elif form.cleaned_data['source'] == 'ISIN':
-                instrument_metaData_BBG = get_metaData_ISIN(instrumentCode,form.cleaned_data['marketdatatype'].type_c, market)
-                try:
-                    # if Bloomberg code exists then this instrument already exists we do not need to insert any new instrument or synonym
-                    inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_BBG['BBG_Ticker'])
-                    if inst_syn.instrument.marketdatatype.name_c == form.cleaned_data['marketdatatype'].name_c:
-                        return
-                except ObjectDoesNotExist as e:
-                    instrument_metaData_DS = get_metaData(instrument_metaData_BBG['ISIN'], 'DS')
-            try:
-                # try to select market data based on the value from BBG meta data if there was no manually specified market
-                market = form.cleaned_data['market']
-                if instrument_metaData_BBG['market'] != None and market == None:
-                    market = Market.objects.get(
-                                    iso_code_c= instrument_metaData_BBG['market']
-                                    )
-            except ObjectDoesNotExist:
-                # if the market doesn't exist then create it
-                market = Market(
-                                iso_code_c = instrument_metaData_BBG['market'],
-                                name_c = instrument_metaData_BBG['market'],
-                            )
-                market.save()
-            try:
-                country = form.cleaned_data['country']
-                if instrument_metaData_BBG['country'] != None and country == None:
-                    country = Country.objects.get(isocode_c=instrument_metaData_BBG['country'])
-            except ObjectDoesNotExist:
-                country = Country(
-                                  isocode_c = instrument_metaData_BBG['country'],
-                                  name_c = pycountry.countries.get(alpha_3=instrument_metaData_BBG['country']).name,
-                                  denomination_c = pycountry.countries.get(alpha_3=instrument_metaData_BBG['country']).official_name
-                                  )
-                country.save()
-            
-            try:
-                risk_country = form.cleaned_data['risk_country']
-                if instrument_metaData_BBG['cntry_of_risk'] != None and risk_country == None:
-                    risk_country = Country.objects.get(isocode_c=instrument_metaData_BBG['cntry_of_risk'])
-            except ObjectDoesNotExist:
-                risk_country = Country(
-                                  isocode_c = instrument_metaData_BBG['cntry_of_risk'],
-                                  name_c = pycountry.countries.get(alpha_3=instrument_metaData_BBG['cntry_of_risk']).name,
-                                  denomination_c = pycountry.countries.get(alpha_3=instrument_metaData_BBG['cntry_of_risk']).official_name
-                                  )
-                risk_country.save()
-            try:
-                # try to create a new instrument
-                instrument = Instrument(
-                                        name_c = instrument_metaData_BBG['name'] if instrument_metaData_BBG['name']!=None else instrument_metaData_DS['name'],
-                                        market = market,
-                                        marketdatatype = form.cleaned_data['marketdatatype'],
-                                        country = country,
-                                        risk_country = risk_country,
-                                        currency = form.cleaned_data['currency'], 
-                                        underlying_currency = form.cleaned_data['underlyingcurrency'],
-                                        bpv_n = float(instrument_metaData_BBG['BPV']),
-                                    )
-                instrument.save()
-                # if the instrument is with type bond we need to read extra data for it
-                if (instrument.marketdatatype.name_c == 'Bonds'):
-                    bond_meta_data = get_bond_metaData(instrument_metaData_DS['ISIN'])
-                    Bond(
-                        instrument = instrument,
-                        nominal_n = bond_meta_data['nominal'],
-                        life_n = bond_meta_data['life'],
-                        coupon_current_n = bond_meta_data['coupon_current'],
-                        coupon_floating_n = bond_meta_data['coupon_floating'],
-                        floating_real_margin_n = bond_meta_data['floating_real_margin'],
-                        amortisationtype_c = bond_meta_data['amortisation_type'],
-                        bondtype_c = bond_meta_data['bond_type'],
-                        ).save()
-                # insert the synonyms for the current instrument
-                if instrument_metaData_DS['DS_Ticker'] != 'NA':
-                    Instrumentsynonym(
-                        instrument = instrument,
-                        codification = Codification.objects.get(name_c='DS_Ticker'),
-                        code_c = instrument_metaData_DS['DS_Ticker'],
-                        validity_d = datetime.now().date(),
-                    ).save()
-                if instrument_metaData_DS['DS_Code'] != 'NA':
-                    Instrumentsynonym(
-                        instrument = instrument,
-                        codification = Codification.objects.get(name_c='DS_Code'),
-                        code_c = instrument_metaData_DS['DS_Code'],
-                        validity_d = datetime.now().date(),
-                    ).save()
-                if instrument_metaData_BBG['BBG_Ticker'] != None:
-                    Instrumentsynonym(
-                        instrument = instrument,
-                        codification = Codification.objects.get(name_c='BBG_Ticker'),
-                        code_c = instrument_metaData_BBG['BBG_Ticker'],
-                        validity_d = datetime.now().date(),
-                    ).save()
-                if instrument_metaData_BBG['ISIN'] != None:
-                    Instrumentsynonym(
-                        instrument = instrument,
-                        codification = Codification.objects.filter(name_c='ISIN')[0],
-                        code_c = instrument_metaData_BBG['ISIN'],
-                        validity_d = datetime.now().date(),
-                    ).save()
-            except Exception as e:
-                ## we need to collect instruments with errors and send an email containing the errors faced
-                ## during the insertion
-                pass
+            new_instrument(instrument_ticker=instrumentCode, 
+                           ticker_type=form.cleaned_data['source'], 
+                           market_data_type=form.cleaned_data['marketdatatype'].name_c, 
+                           currency=form.cleaned_data['currency'], 
+                           underlying_curreny=form.cleaned_data['underlyingcurrency'], 
+                           market=form.cleaned_data['market'],
+                           country=form.cleaned_data['country'],
+                           risk_country=form.cleaned_data['risk_country'])
 
 def newMarketDataType(request):
     form = newMarketDataTypeForm(request.POST)

@@ -1,0 +1,177 @@
+@CHARSET "ISO-8859-1";
+
+body {
+	width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #FAFAFA;
+	font-family: "Futura Lt BT";
+	font-size: 12px;
+	-webkit-print-color-adjust:exact;
+}
+* {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+table.performaceRisiko{
+	border-collapse: collapse;
+	width: 100%;
+}
+
+table.performaceRisiko th, table.performaceRisiko td{
+	border: 1px solid black;
+}
+
+table.performaceRisiko tr:nth-child(even) {
+    background-color: #CCCCCC;
+}
+
+table.performaceRisiko th {
+    background-color: #CCCCCC;
+}
+
+table.month-performance{
+	border-collapse: collapse;
+	width: 100;
+}
+
+table.month-performance th, table.month-performance td{
+	border: 1px solid black;
+}
+
+table.month-performance tr:nth-child(even) {
+    background-color: #CCCCCC;
+}
+
+table.month-performance th {
+    background-color: #CCCCCC;
+}
+
+tr{
+	align: center;
+}
+
+.center{
+	margin: auto;
+	width: 95%;
+	pading: 10px;
+	text-align: center;
+}
+
+.performance_risiko_table{
+	text-align: left;
+}
+
+.center_table_element{
+	text-align: center;
+}
+
+.page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    margin: 10mm auto;
+    border: 1px #D3D3D3 solid;
+    border-radius: 1px;
+    background: white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.page2-table {
+	align: center;
+	width: 100%;
+	height: 100%;
+}
+
+.page2-chart {
+	width: 80%;
+}
+
+/* #qelv-marketexposure-chart {
+	width: 100% !important;
+    max-width: 190mm;
+    height: auto !important;
+    max-height: 60mm;
+}
+
+#performancedifferenz-chart {
+	width: 100% !important;
+    max-width: 190mm;
+    height: auto !important;
+    max-height: 60mm;
+}
+
+#fondsperformance-seit-auflage-chart {
+	width: 100% !important;
+    max-width: 190mm;
+    height: auto !important;
+    max-height: 60mm;
+} */
+
+.performance_risiko_table {
+	width: 100%
+}
+
+.subpage {
+    padding: 1mm;
+    border: 5px red solid;
+    height: 257mm;
+    outline: 2cm #FFEAEA solid;
+}
+
+@page {
+    size: A4;
+    margin: 0;
+}
+
+@media screen {
+    div.pageHeader {
+        display: none;
+    }
+}
+
+#manager-kommentar{
+	text-align: justify;
+    text-justify: inter-word;
+    font-size: 14px;
+}
+
+.middle_section_table{
+	table-layout: fixed;
+}
+
+.equal_cells{
+	width: 50%;
+}
+
+canvas {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+
+@media print {
+	div.pageHeader {
+        position: fixed;
+        top: 0;
+    }
+    html, body {
+        width: 210mm;
+        height: 297mm;        
+    }
+    .page {
+        margin: 0;
+        border: initial;
+        border-radius: initial;
+        width: initial;
+        min-height: initial;
+        box-shadow: initial;
+        background: initial;
+        page-break-after: always;
+    }
+    .back-link {
+    	display: none;
+    }
+}

@@ -41,6 +41,10 @@ INSTALLED_APPS = [
     'InstrumentDataManagement',
     'MarketDataManagement',
     'PortfolioPositionManagement',
+    'UserManagement',
+    'RiskModelManagement',
+    'ManualUpload',
+    'Reporting',
 ]
 
 MIDDLEWARE_CLASSES = [

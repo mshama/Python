@@ -1,0 +1,26 @@
+<div id="edit-riskfactor-overlay" class="overlay-form-large">
+	<div>
+		<h3><label> Edit riskfactor</label></h3>
+		<form action="{% url 'RiskModelManagement:editRiskfactor' riskfactor.id %}" method="POST">
+		    {% csrf_token %}
+		    <table>
+				<tr>					
+					<th>
+						Choose hedge instrument:
+					</th>
+					<td>
+						<select name='riskfactorhedgeinstrument'>
+							<option value="" selected>---------</option>
+							{% for instrument in hedge_instrument_list %}
+							<option value="{{ instrument.id }}">{{ instrument.name_c }}</option>
+							{% endfor %}
+						</select>
+					</td>
+				</tr>
+			</table>
+		    <br /> 
+		    <input name="saveRiskfactor" type="submit" value="Save" class="submit-button"/>
+		</form>
+	<a href='#' onclick='overlayClick("edit-riskfactor-overlay")'>close</a>
+	</div>
+</div>

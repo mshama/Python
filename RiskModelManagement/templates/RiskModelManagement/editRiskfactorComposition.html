@@ -1,0 +1,83 @@
+{% load staticfiles %}
+{% load l10n %}
+<div id="edit-composition-overlay" class="overlay-form-large">
+	<div>
+		<h3><label> Edit composition</label></h3>
+		<form action="{% url 'RiskModelManagement:editRiskfactorComposition' riskfactor.id %}" method="POST">
+		    {% csrf_token %}
+		    <table id='riskfactor-composition-table-edit'>
+		    {% if riskfactor_composition %}
+			    {% for risk_element in riskfactor_composition %}
+					<tr id="row{{ risk_element.id }}">
+						<th style="text-align:left">
+							Component risk factor:
+						</th>
+						<td style="text-align:left">
+							<select name='riskfactor[]'>
+								<option value="" selected>---------</option>
+								{% for riskfactor in riskfactors %}
+									{% if riskfactor.id == risk_element.riskfactor.id %}
+										<option value="{{ riskfactor.id }}" selected>{{ riskfactor.riskfactorinstrument.name_c }}</option>
+									{% else %}
+										<option value="{{ riskfactor.id }}">{{ riskfactor.riskfactorinstrument.name_c }}</option>
+									{% endif %}
+								{% endfor %}
+							</select>
+						</td>
+						<th>
+							Weight:
+						</th>
+						<td style="text-align:right">
+							{% localize off %}
+							<input type="number" name="weight[]" step=".0001" max="9" min="0.0001" value="{{ risk_element.weight_n |stringformat:"f" }}">
+							{% endlocalize %}
+						</td>
+						<td colspan=4 style="text-align:right">
+							<a href="#" onclick="deleteRowEditTable('row{{ risk_element.id }}')">
+								<img src="{% static 'home/images/delete.png' %}"/>
+							</a>
+						</td>
+					</tr>
+				{% endfor %}
+			{% else %}
+				<tr id="row1">
+					<th style="text-align:left">
+						Component risk factor:
+					</th>
+					<td style="text-align:left">
+						<select name='riskfactor[]'>
+							<option value="" selected>---------</option>
+							{% for riskfactor in riskfactors %}
+								<option value="{{ riskfactor.id }}">{{ riskfactor.riskfactorinstrument.name_c }}</option>							
+							{% endfor %}
+						</select>
+					</td>
+					<th>
+						Weight:
+					</th>
+					<td style="text-align:right">
+						{% localize off %}
+						<input type="number" name="weight[]" step=".0001" max="9" min="0.0001">
+						{% endlocalize %}
+					</td>
+					<td colspan=4 style="text-align:right">
+						<a href="#" onclick="deleteRowEditTable('row1')">
+							<img src="{% static 'home/images/delete.png' %}"/>
+						</a>
+					</td>
+				</tr>
+			{% endif %}
+				<tr>
+					<td colspan=4 style="text-align:right">
+						<a href="#" onclick="addRowEditTable()">
+							<img src="{% static 'home/images/add.png' %}"/>
+						</a>
+					</td>
+				</tr>
+			</table>
+		    <br /> 
+		    <input name="saveComposition" type="submit" value="Save" class="submit-button"/>
+		</form>
+	<a href='#' onclick='overlayClick("edit-composition-overlay")'>close</a>
+	</div>
+</div>

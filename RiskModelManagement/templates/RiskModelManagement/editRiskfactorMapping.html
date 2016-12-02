@@ -1,0 +1,38 @@
+<div id="edit-mapping-overlay" class="overlay-form-large">
+	<div>
+		<h3><label> Edit mapping</label></h3>
+		<form action="{% url 'RiskModelManagement:editRiskfactorMapping' riskfactor.id %}" method="POST">
+		    {% csrf_token %}
+		    <input type="checkbox" name="replaceMapping" value="False" title="If checked current mapping will be replaced"> Replace current mapping
+		    <table>
+				<tr>
+					<th style="text-align:left">
+						Mapped instruments:
+					</th>
+					<td style="text-align:left">
+						<select name="instrument_mapping_list[]" id="instrument_mapping_list" multiple size="15" style="width: 300px;overflow:auto">
+					    {% for instrument in mapping_instrument_list %}
+							<option value="{{ instrument.id }}">{{ instrument.name_c }}</option>
+						{% endfor %}
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th style="text-align:left">
+						Choose Mandate
+					</th>
+					<td style="text-align:left">
+						<select name='mandate'>
+							{% for mandate in mandates %}
+							<option value="{{ mandate.id }}">{{ mandate.name_c }}</option>
+							{% endfor %}
+						</select>
+					</td>
+				</tr>
+			</table>
+		    <br /> 
+		    <input name="saveMapping" type="submit" value="Save" class="submit-button"/>
+		</form>
+	<a href='#' onclick='overlayClick("edit-mapping-overlay")'>close</a>
+	</div>
+</div>

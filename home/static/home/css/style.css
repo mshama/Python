@@ -61,3 +61,17 @@ li>a:hover:not(.active) {
 .dropdown-menu:hover>.dropdown-submenu-content {
     display: block;
 }
+
+input[type=submit] {
+    background-color: #333;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.submit-button:hover {
+	background-color: red;
+}

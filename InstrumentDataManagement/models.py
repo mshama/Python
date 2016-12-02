@@ -2,7 +2,6 @@ from django.db import models
 
 from django.db import transaction
 
-from PortfolioPositionManagement.models import Mandate
 
 # Create your models here.
 class Marketdatatype(models.Model):
@@ -69,20 +68,6 @@ class Codification(models.Model):
         managed = False
         db_table = 'Codification'
         
-class AssetClass(models.Model):
-    id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
-    name_c = models.CharField(db_column='Name_C', max_length=50)  # Field name made lowercase.
-    denomination_c = models.CharField(db_column='Denomination_C', max_length=50, blank=True, null=True)  # Field name made lowercase.
-    parent_assetclass = models.ForeignKey('AssetClass', models.DO_NOTHING, db_column='parent_assetclass_id', null=True)  # Field name made lowercase.
-    level_n = models.IntegerField(db_column='Level_N')  # Field name made lowercase.
-    
-    def __str__(self):
-        return self.name_c
-        
-    class Meta:
-        managed = False
-        db_table = 'AssetClass'
-        
 class Instrument(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     name_c = models.CharField(db_column='Name_C', max_length=50)  # Field name made lowercase.
@@ -99,9 +84,17 @@ class Instrument(models.Model):
     maturity_n = models.DecimalField(db_column='Maturity_N', max_digits=10, decimal_places=3, blank=True, null=True)
     bpv_n = models.DecimalField(db_column='BPV_N', max_digits=12, decimal_places=3, blank=True, null=True)
     strike_n = models.DecimalField(db_column='Strike_N', max_digits=10, decimal_places=3, blank=True, null=True)
+    main_instrument_b = models.BooleanField(db_column='Main_Instrument_B', blank=True)
     
     def __str__(self):
         return self.name_c
+    
+    def complete_name(self):
+        instrumentsyn = Instrumentsynonym.objects.filter(instrument=self)
+        code_c = self.name_c
+        for syno in instrumentsyn:
+            code_c = code_c + '\\[' + syno.codification.name_c + ']' + syno.code_c
+        return code_c
     
     class Meta:
         managed = False
@@ -125,6 +118,23 @@ class Bond(models.Model):
     class Meta:
         managed = False
         db_table = 'Bond'
+
+
+from PortfolioPositionManagement.models import Mandate
+
+class AssetClass(models.Model):
+    id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
+    name_c = models.CharField(db_column='Name_C', max_length=50)  # Field name made lowercase.
+    denomination_c = models.CharField(db_column='Denomination_C', max_length=50, blank=True, null=True)  # Field name made lowercase.
+    parent_assetclass = models.ForeignKey('AssetClass', models.DO_NOTHING, db_column='parent_assetclass_id', null=True)  # Field name made lowercase.
+    level_n = models.IntegerField(db_column='Level_N')  # Field name made lowercase.
+    
+    def __str__(self):
+        return self.name_c
+        
+    class Meta:
+        managed = False
+        db_table = 'AssetClass'
         
 class AssetClass_Instrument(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
@@ -141,7 +151,7 @@ class Instrumentsynonym(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     codification = models.ForeignKey(Codification, models.DO_NOTHING, db_column='Codification_ID')  # Field name made lowercase.
     instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
-    validity_d = models.DateField(db_column='Validity_D', blank=True, null=True)  # Field name made lowercase.
+    validity_d = models.DateField(db_column='Validity_D', blank=True, null=True, default=False)  # Field name made lowercase.
     code_c = models.CharField(db_column='Code_C', max_length=50)  # Field name made lowercase.
 
     def __str__(self):

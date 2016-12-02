@@ -1,0 +1,111 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% load staticfiles %}
+	{% include 'RiskModelManagement/includes.html' %}
+	{% if successMessage %}
+		<div class="successMessages">{{ successMessage | default_if_none:"" }}</div>
+	{% endif %}
+	<form method='POST' id ='addRiskfactor-form' action="{% url 'RiskModelManagement:addRiskfactor'%}">
+		{% csrf_token %}
+		<div id='main-data'>
+			<table>
+				<tr>
+					<th>
+						Choose corresponding index:
+					</th>
+					<td>
+						<select name='riskfactorinstrument'>
+							{% for index_instrument in index_list %}
+							<option value="{{ index_instrument.id }}">{{ index_instrument.name_c }}</option>
+							{% endfor %}
+						</select>
+					</td>
+					<th>
+						Choose hedge instrument:
+					</th>
+					<td>
+						<select name='riskfactorhedgeinstrument'>
+							<option value="" selected>---------</option>
+							{% for instrument in hedge_instrument_list %}
+							<option value="{{ instrument.id }}">{{ instrument.name_c }}</option>
+							{% endfor %}
+						</select>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr>
+		<div id='composition-data'>
+			<table id='riskfactor-composition-table'>
+				<tr>
+					<td colspan=4 style="text-align:right">
+						<input 	type="checkbox" name="has_composition"> has composition
+					</td>
+				</tr>
+				<tr id='composition-table-original-row'>
+					<th style="text-align:left">
+						Component risk factor:
+					</th>
+					<td style="text-align:left">
+						<select name='riskfactor[]'>
+							<option value="" selected>---------</option>
+							{% for riskfactor in riskfactors %}
+							<option value="{{ riskfactor.id }}">{{ riskfactor.riskfactorinstrument.name_c }}</option>
+							{% endfor %}
+						</select>
+					</td>
+					<th>
+						Weight:
+					</th>
+					<td style="text-align:right">
+						<input type="number" name="weight[]" step=".0001" max="9" min="0.0001">
+					</td>
+				</tr>
+				<tr>
+					<td colspan=4 style="text-align:right">
+						<a href="#" onclick="addRow()">
+							<img src="{% static 'home/images/add.png' %}"/>
+						</a>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr>
+		<div id='mapping-data'>
+			<table>
+				<tr>
+					<td colspan=4 style="text-align:right">
+						<input 	type="checkbox" name="has_mapping"> has mapping
+					</td>
+				</tr>
+				<tr>
+					<th style="text-align:left">
+						Mapped instruments:
+					</th>
+					<td style="text-align:left">
+						<select name="instrument_mapping_list[]" id="instrument_mapping_list" multiple size="15" style="width: 400px;overflow:auto">
+					    {% for instrument in mapping_instrument_list %}
+							<option value="{{ instrument.id }}">{{ instrument.name_c }}</option>
+						{% endfor %}
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th style="text-align:left">
+						Choose Mandate
+					</th>
+					<td style="text-align:left">
+						<select name='mandate'>
+							{% for mandate in mandates %}
+							<option value="{{ mandate.id }}">{{ mandate.name_c }}</option>
+							{% endfor %}
+						</select>
+					</td>
+				</tr>
+			</table>
+			
+		</div>
+		<br>
+		<input type='submit' name="addRiskfactor" value='Save risk factor'/>
+	</form>
+{% endblock %}

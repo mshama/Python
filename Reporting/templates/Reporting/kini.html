@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<head>
+	{% load staticfiles %}
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type="text/javascript" src="{% static 'Reporting/js/Chart.js-2.1.6/dist/Chart.bundle.js' %}"></script>
+	<script type="text/javascript" src="{% static 'Reporting/js/chartist-js-develop/dist/chartist.min.js' %}"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/numeral.js/1.4.5/numeral.min.js"></script>
+	<script type="text/javascript">		
+		var es50index = {{ ES50Index|safe }};
+		var kiniindex = {{ KiniIndex|safe }};
+		var dateArray = {{ dateArray|safe }};
+	</script>
+	<script type="text/javascript">
+		var invgrad = {{ InvGrad|safe }};
+		var varportfolio = {{ VARPortfolio|safe }};
+		
+	</script>
+	<script type="text/javascript">
+		var es50index = {{ ES50Index|safe }};
+		var kiniaktienindex = {{ KiniAktienIndex|safe }};
+	</script> 
+	
+	<script type="text/javascript"  src="{% static 'Reporting/js/scriptskini.js' %}"></script>
+	<script type="text/javascript">
+			
+		window.onload = init;
+		
+	</script>
+	
+	<title>Monthly Report {{ reportDate|date:"M Y" }}</title>
+	<style> table, th, td {
+    		border: 1px solid black;
+    		border-collapse:collapse;
+			}
+	</style>
+
+</head>
+<link rel="stylesheet" type="text/css" href="{% static 'Reporting/css/stylekini.css' %}" />
+
+
+
+<body>
+<a href="{% url 'home:index' %}" class="back-link">Back to home</a>
+
+<!-- <div  class="page">	
+	<div class="containerheading">
+ 		<div class="header">
+			<div class="links">
+				<h3>
+					<img src="/static/home/images/qc_logo.png" alt="Bild nicht gefunden"  height="40px" width="150px">
+				</h3>
+			</div>
+			<div class="rechts">
+				<p style="text-align:right;"><br>{{ MonthYear }} (Erstellt am {{today}})</p>
+			</div>
+		</div>
+	</div>
+	<h1>Testseite</h1>
+	<h1>{{ LastDay }}</h1>
+	<h2>{{ MonthYear }}</h2>
+	<h1>{{ FirstDay }}</h1>
+
+	
+	<p> Vektor ES50 Index für Chart: {{ES50Index}}</p>
+	<p> Vektor Index Aktienportfolio für Chart: {{KiniAktienIndex}}</p>
+
+</div> -->
+
+
+<div  class="page">
+	<div class="containerheading">
+ 		<div class="header">
+			<div class="links">
+				<h3>
+					<img src="/static/home/images/qc_logo.png" alt="Bild nicht gefunden"  height="40px" width="150px">
+				</h3>
+			</div>
+			<div class="rechts">
+				<p style="text-align:right;"><br>{{ MonthYear }} (Erstellt am {{today}})</p>
+			</div>
+		</div>
+	</div>
+
+	<div>
+		<h1 >Monatsbericht KINI Q.ART {{ MonthYear }}</h1>
+		<h2> I. Bericht des Portfoliomanagements {{OverviewData.1}}</h2>
+		<p>{{BerichtPortfoliomanagement}}</p>
+	</div>
+	<div>
+		<h2>II. 	Wertentwicklung</h2>
+		<h3 style="text-align:center;">Wertentwicklung des KINI Q.ART im Berichtsmonat</h3>
+	</div>
+	<div>
+		<div>
+			<canvas id="fondsperformance-mtd-chart"  height='50%' width='100%'>
+		</div>
+	</div>
+</div>
+
+<div  class="page">
+	<div class="containerheading">
+ 		<div class="header">
+			<div class="links">
+				<h3>
+					<img src="/static/home/images/qc_logo.png" alt="Bild nicht gefunden"  height="40px" width="150px">
+				</h3>
+			</div>
+			<div class="rechts">
+			<p style="text-align:right;"><br>{{ MonthYear }} (Erstellt am {{today}})</p>
+			</div>
+		</div>
+	</div>
+	<h2>III. 	Risiko per {{ LastDay }}</h2>
+	
+	<table class="risk">
+		<tr height="20px">
+			<td class="tdrisk1">Gemessenes Portfoliorisiko:</td>
+			<td class="tdrisk1" style="text-align:right">{{ RiskLastDate.0 }} Mio. EUR({{ RiskLastDate.1 }}%)</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdrisk1">Verfügbares Risikokapital:</td>
+			<td class="tdrisk1" style="text-align:right">{{ RiskLastDate.2 }} Mio. EUR</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdrisk1">Risikobedeckungsgrad<br></td>
+			<td class="tdrisk1" style="text-align:right">{{ RiskLastDate.3 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdrisk2" colspan="2">(aktuelles Risikokapital / Risikopotenzial bei Vollinvestition)</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdrisk1">Risikosignal:</td>
+			<td class="tdrisk1" style="text-align:right">{{ RiskLastDate.4 }}%</td>
+		</tr>
+	</table>
+	
+	<h3>Anmerkung:</h3>
+	
+	<p>{{AnmerkungRisiko}}</p>
+	
+	<h3 style="text-align:center">KINI Q.ART: Risikosteuerung im Berichtsmonat</h3>
+	<canvas id="risk-chart"  height='50%' width='100%'>
+</div>
+
+<div  class="page">
+	<div class="containerheading">
+ 		<div class="header">
+			<div class="links">
+				<h3>
+					<img src="/static/home/images/qc_logo.png" alt="Bild nicht gefunden"  height="40px" width="150px">
+				</h3>
+			</div>
+			<div class="rechts">
+			<p style="text-align:right;"><br>{{ MonthYear }} (Erstellt am {{today}})</p>
+			</div>
+		</div>
+	</div>
+	
+	<h2>IV.		Aktienportfolio per {{ LastDay }}</h2>
+	
+	<h3 style="text-align:center">Wertentwicklung des Aktienportfolios im Berichtsmonat</h3>
+	
+		<table class="aktien">
+		<tr>
+			<td class="tdaktien"><canvas id="aktienperformance-mtd-chart"  height='60%' width='100%'>
+			
+			</td>
+		</tr>
+		<tr>
+			<td class="tdaktien"><br>
+			
+			</td>
+		</tr>
+		<tr>
+			<td class="tdaktien"><br>
+			
+			</td>
+		</tr>
+		<tr>
+			<td class="tdaktien"><br>
+			
+			</td>
+		</tr>
+		<tr>
+			<td class="tdaktien">
+				<div class="containerallokation">
+			 		<div class="header">
+						<div class="allokationlinks">
+							<table width="95%">
+								<tr height="20px">
+									<th class="tdallokation" colspan="3">Länderallokation</th>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokationsub"></td><td class="tdallokationsub">Portfolio</td><td class="tdallokationsub">Benchmark</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.0.0 }}</td><td class="tdallokation2">{{ Länderallokation.0.1 }}%</td><td class="tdallokation3">{{ Länderallokation.0.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.1.0 }}</td><td class="tdallokation2">{{ Länderallokation.1.1 }}%</td><td class="tdallokation3">{{ Länderallokation.1.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.2.0 }}</td><td class="tdallokation2">{{ Länderallokation.2.1 }}%</td><td class="tdallokation3">{{ Länderallokation.2.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.3.0 }}</td><td class="tdallokation2">{{ Länderallokation.3.1 }}%</td><td class="tdallokation3">{{ Länderallokation.3.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.5.0 }}</td><td class="tdallokation2">{{ Länderallokation.5.1 }}%</td><td class="tdallokation3">{{ Länderallokation.5.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.6.0 }}</td><td class="tdallokation2">{{ Länderallokation.6.1 }}%</td><td class="tdallokation3">{{ Länderallokation.6.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.7.0 }}</td><td class="tdallokation2">{{ Länderallokation.7.1 }}%</td><td class="tdallokation3">{{ Länderallokation.7.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.8.0 }}</td><td class="tdallokation2">{{ Länderallokation.8.1 }}%</td><td class="tdallokation3">{{ Länderallokation.8.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Länderallokation.4.0 }}</td><td class="tdallokation2">{{ Länderallokation.4.1 }}%</td><td class="tdallokation3">{{ Länderallokation.4.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1" style="color:white"></td><td class="tdallokation2" style="color:white"></td><td class="tdallokation3" style="color:white">{{ Länderallokation.2.1 }}%</td>
+								</tr>
+							</table>
+						</div>
+						<div class="allokationrechts">
+							<table width="100%">
+								<tr height="20px">
+									<th class="tdallokation" colspan="3">Sektorallokation</th>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokationsub"></td><td class="tdallokationsub">Portfolio</td><td class="tdallokationsub">Benchmark</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.0.0 }}</td><td class="tdallokation2">{{ Sektorallokation.0.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.0.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.1.0 }}</td><td class="tdallokation2">{{ Sektorallokation.1.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.1.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.2.0 }}</td><td class="tdallokation2">{{ Sektorallokation.2.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.2.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.3.0 }}</td><td class="tdallokation2">{{ Sektorallokation.3.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.3.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.4.0 }}</td><td class="tdallokation2">{{ Sektorallokation.4.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.4.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.5.0 }}</td><td class="tdallokation2">{{ Sektorallokation.5.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.5.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.6.0 }}</td><td class="tdallokation2">{{ Sektorallokation.6.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.6.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.7.0 }}</td><td class="tdallokation2">{{ Sektorallokation.7.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.7.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.8.0 }}</td><td class="tdallokation2">{{ Sektorallokation.8.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.8.2 }}%</td>
+								</tr>
+								<tr height="20px">
+									<td class="tdallokation1">{{ Sektorallokation.9.0 }}</td><td class="tdallokation2">{{ Sektorallokation.9.1 }}%</td><td class="tdallokation3">{{ Sektorallokation.9.2 }}%</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+			</td>
+		</tr>	
+	</table>
+</div>
+	
+<div  class="page">
+	<div class="containerheading">
+ 		<div class="header">
+			<div class="links">
+				<h3>
+					<img src="/static/home/images/qc_logo.png" alt="Bild nicht gefunden"  height="40px" width="150px">
+				</h3>
+			</div>
+			<div class="rechts">
+			<p style="text-align:right;"><br>{{ MonthYear }} (Erstellt am {{today}})</p>
+			</div>
+		</div>
+	</div>
+	<div class="containerfundamental">
+ 		<div class="header">
+			<div class="fundamental">
+				<table width="85%">
+					<tr height="20px">
+						<th class="tdallokation" colspan="3">Fundamentale Kennzahlen</th>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1"></td><td class="tdfundamental2" style="text-align:center;">Portfolio</td><td class="tdfundamental3" style="text-align:center;">Benchmark</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">Dividendenrendite</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.0.0 }}%</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.0.1 }}%</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">Dividendenwachstum (3 J.)</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.1.0 }}%</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.1.1 }}%</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">EPS-Wachstum (3 J.)</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.2.0 }}%</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.2.1 }}%</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">KGV (Trailing)</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.3.0 }}</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.3.1 }}</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">KBV</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.4.0 }}</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.4.1 }}</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">KCF</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.5.0 }}</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.5.1 }}</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">Verschuldungsgrad (Debt/Equity)</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.6.0 }}%</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.6.1 }}%</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1"></td><td class="tdfundamental2" style="text-align:right;"></td><td class="tdfundamental3" style="text-align:right;"></td>
+					</tr>
+					<tr height="20px">
+						<td class="tdfundamental1">Marktkapitalisierung (Mrd. EUR)</td><td class="tdfundamental2" style="text-align:right;">{{ Fundamentals.7.0 }}</td><td class="tdfundamental3" style="text-align:right;">{{ Fundamentals.7.1 }}</td>
+					</tr>
+				</table>
+			</div>
+			<div class="risk2">
+				<table width="75%">
+					<tr class="tdallokation">
+						<th class="tdallokation" colspan="2">Risiko</th>
+					</tr>
+					<tr height="20px">
+						<td class="tdallokation1"></td><td class="tdallokationsub">Portfolio</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdallokation1">Tracking Error</td><td class="tdallokation3"> {{ RiskLastDate.5 }}%</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdallokation1">Beta</td><td class="tdallokation3">{{ RiskLastDate.6 }}</td>
+					</tr>
+					<tr height="20px">
+						<td class="tdallokation1">Korrelation</td><td class="tdallokation3">{{ RiskLastDate.7 }}</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<p style="font-size:11px;"> Quellen: Bloomberg, Thomson Reuters</p>
+	<h3>Anmerkung zum Aktienportfolio:</h3>
+	<p>{{AnmerkungAktienportfolio}}</p>
+</div>
+
+<div  class="page">	
+	<div class="containerheading">
+ 		<div class="header">
+			<div class="links">
+				<h3>
+					<img src="/static/home/images/qc_logo.png" alt="Bild nicht gefunden"  height="40px" width="150px">
+				</h3>
+			</div>
+			<div class="rechts">
+			<p style="text-align:right;"><br>{{ MonthYear }} (Erstellt am {{today}})</p>
+			</div>
+		</div>
+	</div>
+
+	<h3>Übersicht Aktienportfolio per {{ LastDay }}:</h3>
+	<table width="100%">
+		<tr>
+			<th class="thoverview">Unternehmen</th><th class="thoverview">ISIN</th><th class="thoverview">ICB Sektor</th><th class="thoverview">Land</th><th class="thoverview">Anteile</th><th class="thoverview">Gewicht<sup> *)</sup></th>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.0.0 }}</td><td class="tdoverview2">{{ Overview.0.1 }}</td><td class="tdoverview3">{{ Overview.0.2 }}</td><td class="tdoverview4">{{ Overview.0.3 }}</td><td class="tdoverview5">{{ Overview.0.4 }}</td><td class="tdoverview6">{{ Overview.0.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.1.0 }}</td><td class="tdoverview2">{{ Overview.1.1 }}</td><td class="tdoverview3">{{ Overview.1.2 }}</td><td class="tdoverview4">{{ Overview.1.3 }}</td><td class="tdoverview5">{{ Overview.1.4 }}</td><td class="tdoverview6">{{ Overview.1.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.2.0 }}</td><td class="tdoverview2">{{ Overview.2.1 }}</td><td class="tdoverview3">{{ Overview.2.2 }}</td><td class="tdoverview4">{{ Overview.2.3 }}</td><td class="tdoverview5">{{ Overview.2.4 }}</td><td class="tdoverview6">{{ Overview.2.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.3.0 }}</td><td class="tdoverview2">{{ Overview.3.1 }}</td><td class="tdoverview3">{{ Overview.3.2 }}</td><td class="tdoverview4">{{ Overview.3.3 }}</td><td class="tdoverview5">{{ Overview.3.4 }}</td><td class="tdoverview6">{{ Overview.3.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.4.0 }}</td><td class="tdoverview2">{{ Overview.4.1 }}</td><td class="tdoverview3">{{ Overview.4.2 }}</td><td class="tdoverview4">{{ Overview.4.3 }}</td><td class="tdoverview5">{{ Overview.4.4 }}</td><td class="tdoverview6">{{ Overview.4.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.5.0 }}</td><td class="tdoverview2">{{ Overview.5.1 }}</td><td class="tdoverview3">{{ Overview.5.2 }}</td><td class="tdoverview4">{{ Overview.5.3 }}</td><td class="tdoverview5">{{ Overview.5.4 }}</td><td class="tdoverview6">{{ Overview.5.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.6.0 }}</td><td class="tdoverview2">{{ Overview.6.1 }}</td><td class="tdoverview3">{{ Overview.6.2 }}</td><td class="tdoverview4">{{ Overview.6.3 }}</td><td class="tdoverview5">{{ Overview.6.4 }}</td><td class="tdoverview6">{{ Overview.6.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.7.0 }}</td><td class="tdoverview2">{{ Overview.7.1 }}</td><td class="tdoverview3">{{ Overview.7.2 }}</td><td class="tdoverview4">{{ Overview.7.3 }}</td><td class="tdoverview5">{{ Overview.7.4 }}</td><td class="tdoverview6">{{ Overview.7.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.8.0 }}</td><td class="tdoverview2">{{ Overview.8.1 }}</td><td class="tdoverview3">{{ Overview.8.2 }}</td><td class="tdoverview4">{{ Overview.8.3 }}</td><td class="tdoverview5">{{ Overview.8.4 }}</td><td class="tdoverview6">{{ Overview.8.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.9.0 }}</td><td class="tdoverview2">{{ Overview.9.1 }}</td><td class="tdoverview3">{{ Overview.9.2 }}</td><td class="tdoverview4">{{ Overview.9.3 }}</td><td class="tdoverview5">{{ Overview.9.4 }}</td><td class="tdoverview6">{{ Overview.9.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.10.0 }}</td><td class="tdoverview2">{{ Overview.10.1 }}</td><td class="tdoverview3">{{ Overview.10.2 }}</td><td class="tdoverview4">{{ Overview.10.3 }}</td><td class="tdoverview5">{{ Overview.10.4 }}</td><td class="tdoverview6">{{ Overiew.10.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.11.0 }}</td><td class="tdoverview2">{{ Overview.11.1 }}</td><td class="tdoverview3">{{ Overview.11.2 }}</td><td class="tdoverview4">{{ Overview.11.3 }}</td><td class="tdoverview5">{{ Overview.11.4 }}</td><td class="tdoverview6">{{ Overview.11.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.12.0 }}</td><td class="tdoverview2">{{ Overview.12.1 }}</td><td class="tdoverview3">{{ Overview.12.2 }}</td><td class="tdoverview4">{{ Overview.12.3 }}</td><td class="tdoverview5">{{ Overview.12.4 }}</td><td class="tdoverview6">{{ Overview.12.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.13.0 }}</td><td class="tdoverview2">{{ Overview.13.1 }}</td><td class="tdoverview3">{{ Overview.13.2 }}</td><td class="tdoverview4">{{ Overview.13.3 }}</td><td class="tdoverview5">{{ Overview.13.4 }}</td><td class="tdoverview6">{{ Overview.13.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.14.0 }}</td><td class="tdoverview2">{{ Overview.14.1 }}</td><td class="tdoverview3">{{ Overview.14.2 }}</td><td class="tdoverview4">{{ Overview.14.3 }}</td><td class="tdoverview5">{{ Overview.14.4 }}</td><td class="tdoverview6">{{ Overview.14.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.15.0 }}</td><td class="tdoverview2">{{ Overview.15.1 }}</td><td class="tdoverview3">{{ Overview.15.2 }}</td><td class="tdoverview4">{{ Overview.15.3 }}</td><td class="tdoverview5">{{ Overview.15.4 }}</td><td class="tdoverview6">{{ Overview.15.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.16.0 }}</td><td class="tdoverview2">{{ Overview.16.1 }}</td><td class="tdoverview3">{{ Overview.16.2 }}</td><td class="tdoverview4">{{ Overview.16.3 }}</td><td class="tdoverview5">{{ Overview.16.4 }}</td><td class="tdoverview6">{{ Overview.16.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.17.0 }}</td><td class="tdoverview2">{{ Overview.17.1 }}</td><td class="tdoverview3">{{ Overview.17.2 }}</td><td class="tdoverview4">{{ Overview.17.3 }}</td><td class="tdoverview5">{{ Overview.17.4 }}</td><td class="tdoverview6">{{ Overview.17.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.18.0 }}</td><td class="tdoverview2">{{ Overview.18.1 }}</td><td class="tdoverview3">{{ Overview.18.2 }}</td><td class="tdoverview4">{{ Overview.18.3 }}</td><td class="tdoverview5">{{ Overview.18.4 }}</td><td class="tdoverview6">{{ Overview.18.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.19.0 }}</td><td class="tdoverview2">{{ Overview.19.1 }}</td><td class="tdoverview3">{{ Overview.19.2 }}</td><td class="tdoverview4">{{ Overview.19.3 }}</td><td class="tdoverview5">{{ Overview.19.4 }}</td><td class="tdoverview6">{{ Overview.19.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.20.0 }}</td><td class="tdoverview2">{{ Overview.20.1 }}</td><td class="tdoverview3">{{ Overview.20.2 }}</td><td class="tdoverview4">{{ Overview.20.3 }}</td><td class="tdoverview5">{{ Overview.20.4 }}</td><td class="tdoverview6">{{ Overview.20.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.21.0 }}</td><td class="tdoverview2">{{ Overview.21.1 }}</td><td class="tdoverview3">{{ Overview.21.2 }}</td><td class="tdoverview4">{{ Overview.21.3 }}</td><td class="tdoverview5">{{ Overview.21.4 }}</td><td class="tdoverview6">{{ Overview.21.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.22.0 }}</td><td class="tdoverview2">{{ Overview.22.1 }}</td><td class="tdoverview3">{{ Overview.22.2 }}</td><td class="tdoverview4">{{ Overview.22.3 }}</td><td class="tdoverview5">{{ Overview.22.4 }}</td><td class="tdoverview6">{{ Overview.22.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.23.0 }}</td><td class="tdoverview2">{{ Overview.23.1 }}</td><td class="tdoverview3">{{ Overview.23.2 }}</td><td class="tdoverview4">{{ Overview.23.3 }}</td><td class="tdoverview5">{{ Overview.23.4 }}</td><td class="tdoverview6">{{ Overview.23.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.24.0 }}</td><td class="tdoverview2">{{ Overview.24.1 }}</td><td class="tdoverview3">{{ Overview.24.2 }}</td><td class="tdoverview4">{{ Overview.24.3 }}</td><td class="tdoverview5">{{ Overview.24.4 }}</td><td class="tdoverview6">{{ Overview.24.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.25.0 }}</td><td class="tdoverview2">{{ Overview.25.1 }}</td><td class="tdoverview3">{{ Overview.25.2 }}</td><td class="tdoverview4">{{ Overview.25.3 }}</td><td class="tdoverview5">{{ Overview.25.4 }}</td><td class="tdoverview6">{{ Overview.25.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.26.0 }}</td><td class="tdoverview2">{{ Overview.26.1 }}</td><td class="tdoverview3">{{ Overview.26.2 }}</td><td class="tdoverview4">{{ Overview.26.3 }}</td><td class="tdoverview5">{{ Overview.26.4 }}</td><td class="tdoverview6">{{ Overview.26.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.27.0 }}</td><td class="tdoverview2">{{ Overview.27.1 }}</td><td class="tdoverview3">{{ Overview.27.2 }}</td><td class="tdoverview4">{{ Overview.27.3 }}</td><td class="tdoverview5">{{ Overview.27.4 }}</td><td class="tdoverview6">{{ Overview.27.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.28.0 }}</td><td class="tdoverview2">{{ Overview.28.1 }}</td><td class="tdoverview3">{{ Overview.28.2 }}</td><td class="tdoverview4">{{ Overview.28.3 }}</td><td class="tdoverview5">{{ Overview.28.4 }}</td><td class="tdoverview6">{{ Overview.28.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.29.0 }}</td><td class="tdoverview2">{{ Overview.29.1 }}</td><td class="tdoverview3">{{ Overview.29.2 }}</td><td class="tdoverview4">{{ Overview.29.3 }}</td><td class="tdoverview5">{{ Overview.29.4 }}</td><td class="tdoverview6">{{ Overview.29.5 }}%</td>
+		</tr>
+		<tr height="20px">
+			<td class="tdoverview1">{{ Overview.30.0 }}</td><td class="tdoverview2">{{ Overview.30.1 }}</td><td class="tdoverview3">{{ Overview.30.2 }}</td><td class="tdoverview4">{{ Overview.30.3 }}</td><td class="tdoverview5">{{ Overview.30.4 }}</td><td class="tdoverview6">{{ Overview.30.5 }}%</td>
+		</tr>
+	</table>
+	<p>*)Gewicht relativ zum reinen Aktienportfolio, ohne Berücksichtigung von Kasse, Margin etc.</p>
+</div>
+</body>
+	
+

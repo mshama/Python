@@ -1,0 +1,50 @@
+@CHARSET "ISO-8859-1";
+
+.errorMessages {
+	color: red;
+	font-family: "Futura Lt BT";
+	font-size: 16px; 
+}
+
+.successMessages {
+	color: #28B463;
+	font-family: "Futura Lt BT";
+	font-size: 16px; 
+}
+
+html *{
+	font-family: "Futura Lt BT";
+}
+
+input[type=submit] {
+    background-color: #333;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.submit-button:hover {
+	background-color: red;
+}
+select, input, textarea {
+	font-family: "Futura Lt BT";
+}
+
+a.button-link {
+    appearance: button;
+
+    background-color: #333;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-decoration: none;
+    margin: 4px 2px;
+    font-size: 14px;
+}
+
+a.button-link:hover {
+	background-color: red;
+}

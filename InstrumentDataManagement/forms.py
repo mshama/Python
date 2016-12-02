@@ -16,7 +16,7 @@ class newMarketDataTypeForm(forms.ModelForm):
         fields = ('name_c', 'type_c')
         widgets = {
             'name_c': forms.TextInput(attrs={ 'required': 'true' }),
-            'type_c': forms.Select(choices = ([('Stock','Stock'), ('Bond','Bond'),('Derivative','Derivative'), ('InterestRate','InterestRate'), ]))
+            'type_c': forms.Select(choices = ([('Stock','Equity'), ('Bond','Bond'),('Derivative','Derivative'), ('InterestRate','InterestRate'), ]))
         }
         labels = {
             'name_c': _('Name:'),

@@ -1,0 +1,12 @@
+<div id="mandate-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter new mandate</label></h3>
+		<form action="{% url 'PortfolioPositionManagement:addMandate'%}" method="POST">
+		    {% csrf_token %}
+		    {{ mandateForm.as_p }}
+		    <br /> 
+		    <input name="newMandate" type="submit" value="Submit" class="submit-button"/>
+		</form>
+	<a href='#' onclick='overlayClick("mandate-overlay")'>close</a>
+	</div>
+</div>

@@ -21,4 +21,10 @@ urlpatterns = [
     url(r'', include('home.urls')),
     url(r'^InstrumentDataManagement/', include('InstrumentDataManagement.urls')),
     url(r'^MarketDataManagement/', include('MarketDataManagement.urls')),
+    url(r'^RiskModelManagement/', include('RiskModelManagement.urls')),
+    url(r'^PortfolioPositionManagement/', include('PortfolioPositionManagement.urls')),
+    url(r'^RiskModelManagement/', include('RiskModelManagement.urls')),
+    url(r'^UserManagement/', include('UserManagement.urls')),
+    url(r'^ManualUpload/', include('ManualUpload.urls')),
+    url(r'^Reporting/', include('Reporting.urls')),
 ]
