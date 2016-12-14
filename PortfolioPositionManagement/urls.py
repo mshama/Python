@@ -13,4 +13,8 @@ urlpatterns = [
     url(r'^viewPortfolios/$', views.viewPortfolios, name='viewPortfolios'),
     url(r'^viewMandates/$', views.viewMandates, name='viewMandates'),
     url(r'^addMandate/$', views.addMandate, name='addMandate'),
+    url(r'^viewPositions/$', views.viewPositions, name='viewPositions'),
+    url(r'^editPosition/(?P<position_id>[0-9]+)/$', views.editPosition, name='editPosition'),
+    url(r'^deletePosition/(?P<position_id>[0-9]+)/$', views.deletePosition, name='deletePosition'),
+    url(r'^viewTransactions/$', views.viewTransactions, name='viewTransactions'),
 ]

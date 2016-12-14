@@ -4,15 +4,25 @@
 		<form action="{% url 'RiskModelManagement:editRiskfactor' riskfactor.id %}" method="POST">
 		    {% csrf_token %}
 		    <table>
+		    	<tr>
+		    		<th>Name:</th>
+		    		<td>
+		    			<input name="riskfactor_name" type="text" value="{{ riskfactor.name_c | default_if_none:"" }}">
+		    		</td>
+		    	</tr>
 				<tr>					
 					<th>
 						Choose hedge instrument:
 					</th>
 					<td>
 						<select name='riskfactorhedgeinstrument'>
-							<option value="" selected>---------</option>
+							<option value="">---------</option>
 							{% for instrument in hedge_instrument_list %}
-							<option value="{{ instrument.id }}">{{ instrument.name_c }}</option>
+								{% if instrument.id == riskfactor.hedgeinstrument.id %}
+									<option value="{{ instrument.id }}" selected>{{ instrument.name_c }}</option>
+								{% else %}
+									<option value="{{ instrument.id }}">{{ instrument.name_c }}</option>
+								{% endif %}
 							{% endfor %}
 						</select>
 					</td>

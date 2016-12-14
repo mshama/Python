@@ -18,15 +18,19 @@ div.mandate-div-list {
 }
 
 ul.mandates-list {
-  columns: 5;
+/*   columns: 5;
   -webkit-columns: 5;
   -moz-columns: 5;
-  display: inline-block; 
+ */  display: inline-block; 
   text-align: left;
   
   background-color: white;
   list-style-type: disc;
 }
+/* 
+ul.mandates-list li{
+  list-style-type: disc;
+} */
 
 html *{
 	font-family: "Futura Lt BT";
@@ -86,3 +90,5 @@ a.button-link {
 a.button-link:hover {
 	background-color: red;
 }
+
+ul.errorlist {display:none;}

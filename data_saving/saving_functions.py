@@ -17,7 +17,9 @@ from matplotlib import ticker
 
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from misc.email import send_email
+from django.db.utils import IntegrityError
 
 
 sys.path.append(os.path.abspath("../../QuantServer/"))
@@ -31,13 +33,53 @@ from InstrumentDataManagement.models import Marketdatatype, Instrumentsynonym, I
                                             Country, Bond, Market, Codification
 from PortfolioPositionManagement.models import Transaction, Portfolio, Position,\
     Investment
-    
+from RiskModelManagement.models import Riskrawdata    
 
 from dataconnections.datasource import get_metaData, get_bond_metaData, get_metaData_ISIN
 
 from data_loading.loading_functions import get_instrument
 
+
+def update_DB_Table(table_name, input_data):
+    '''
+    
+    @param table_name: table name to be updated
+    @param input_data: a dataframe containing the fields and their correspondent new values to be updated
+    '''
+    db_table = eval(table_name)
+    errors = []
+    
+    fieldnames = [field.lower() for field in input_data.keys()] 
+    input_data.columns = fieldnames
+    try:
+        for index, record in input_data.iterrows():
+            try:
+                # convert to dictionary
+                new_record = record.to_dict()
+                id = new_record['id']
+                del new_record['id']
+                dbRecord = db_table.objects.get(pk=id)
+                for key in new_record:
+                    setattr(dbRecord, key, new_record[key])
+                
+                # save database object
+                dbRecord.save()
+            except Exception as e:
+                errors.append(e)
+    except Exception:
+        pass
+    return errors
+
 def prepare_data(input_data):
+    '''
+    this function checks the ticker(ISIN, DS ticker, BBG ticker) if it already exists in the database
+    and tries to create it if it is not existing and then update the data record with the id of the correspondent investment
+    
+    @param input_data: a dictionary containing transaction/position data
+    
+    @return: returns the modified input_data with the adjusted investment field
+    '''
+    
     if 'isin' in input_data:
         field = 'isin'
     elif 'bbg' in input_data:
@@ -49,9 +91,10 @@ def prepare_data(input_data):
     else:
         return None
     
-    _, investment = get_instrument(input_data[field], input_data['market_data_type_c'])
+    currency = Currency.objects.get(pk=input_data['currency_id']).isocode_c
+    
+    _, investment = get_instrument(ticker=input_data[field], marketdatatype=input_data['market_data_type_c'], currency=currency)
     if investment == None:
-        currency = Currency.objects.get(pk=input_data['currency_id'])
         if field == 'cash':
             _, investment = new_cash_instrument(input_data[field], currency)
         else:
@@ -89,23 +132,67 @@ def save_in_DB(input_data, table_name, with_instrument=False):
                 # convert to dictionary
                 new_record = record.to_dict()
                 if with_instrument:
-                    new_record = prepare_data(new_record)
+                    new_db_record = prepare_data(new_record)
                 # create a new database object
-                new_record = db_table(**new_record)
+                new_db_record = db_table(**new_record)
                 # save database object
-                new_record.save()
+                new_db_record.save()
+            except IntegrityError as e:
+                if table_name == 'Position':
+                    old_db_record = db_table.objects.get(
+                                                        parent_investment_id=new_record['parent_investment_id'],
+                                                        investment_id=new_record['investment_id'],
+                                                        status=new_record['status'],
+                                                        positiondatefrom_d=new_record['positiondatefrom_d'],
+                                                        original_input_usergroup=new_record['original_input_usergroup'],
+                                                        ) 
+                    for key in new_record:
+                        setattr(old_db_record, key, new_record[key])
+                    old_db_record.save()
+                else:
+                    errors.append(e)
             except Exception as e:
                 errors.append(e)
     except Exception:
         pass
     return errors
 
+def new_PF(input_data):
+    errors = []
+    investments = []
+    # make sure that all fields are in small letters
+    fieldnames = [field.lower() for field in input_data.keys()] 
+    input_data.columns = fieldnames
+    try:
+        for index, record in input_data.iterrows():
+            try:
+                # convert to dictionary
+                new_record = record.to_dict()
+                # create a new database object
+                new_record = Portfolio(**new_record)
+                # save database object
+                new_record.save()
+                
+                investment = Investment(
+                    portfolio = new_record
+                )
+                investment.save()
+                
+                investments.append(investment.id)
+            except Exception as e:
+                errors.append(e)
+    except Exception:
+        pass
+    return investments, errors
+    
+
 def new_cash_instrument(instrument_ticker, currency=None, active=True):
     '''
+    this function is used to insert new cash instrument 
     
     @param instrument_ticker: cash ticker
-    @param currency:
-    @param active:
+    @param currency: currency that corresponds to this cash instrument
+    @param active: to mark if the ticker for this instrument should be active or not
     '''
     
     codification = Codification.objects.get(name_c='Internal')
@@ -146,6 +233,8 @@ def new_cash_instrument(instrument_ticker, currency=None, active=True):
 
 def new_instrument(instrument_ticker, ticker_type, market_data_type, currency=None, underlying_curreny=None, market=None, country=None, risk_country=None, active=True):
     '''
+    to insert new instrument in the database. this function reads the meta data from bloomberg and datastream and then checks if an instrument already exists with the given
+    data at the end it returns an instrument and an investment objects
     
     @param instrument_ticker: ticker of the instrument that needs to be inserted
     @param ticker_type: type of ticker (BBG, DS, ISIN)
@@ -236,17 +325,20 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency=No
                 except ObjectDoesNotExist as e:
                     pass
             except Exception as e:
-                bbg_errorMsg.append('[BBG Error]' + instrument_ticker + ':' + str(e))
+                bbg_errorMsg.append('[BBG Error]' + instrument_ticker + ':' + 'cannot read bloomberg ticker or ticker does not exist {' + str(e) + '}')
             
             try:
                 instrument_metaData_DS = get_metaData(instrument_ticker, 'DS')
                 if not instrument_metaData_BBG:
-                    inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_DS['DS_Ticker'])
-                    if inst_syn.instrument.marketdatatype.name_c == market_data_type.name_c and inst_syn.instrument.market == market:
-                        ds_errorMsg.append('[DS Error] no new instrument is inserted because there is already one with the same datastream ticker')
-                        email_msg = '\n'.join(bbg_errorMsg) + '\n' + '\n'.join(ds_errorMsg) + '\n' + str(instrument_ticker + ':' + e)             
-                        send_email('MShama@quantcapital.de;GJi@quantcapital.de', email_subject, email_msg)
-                        return inst_syn.instrument, Investment.objects.get(instrument=inst_syn.instrument)
+                    try:
+                        inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_DS['DS_Ticker'])
+                        if inst_syn.instrument.marketdatatype.name_c == market_data_type.name_c and inst_syn.instrument.market == market:
+                            ds_errorMsg.append('[DS Error] no new instrument is inserted because there is already one with the same datastream ticker')
+                            email_msg = '\n'.join(bbg_errorMsg) + '\n' + '\n'.join(ds_errorMsg) + '\n'            
+                            send_email('MShama@quantcapital.de;GJi@quantcapital.de', email_subject, email_msg)
+                            return inst_syn.instrument, Investment.objects.get(instrument=inst_syn.instrument)
+                    except ObjectDoesNotExist:
+                        pass
             except Exception as e:
                 ds_errorMsg.append('[DS Error]' + instrument_ticker + ':' + str(e))
                 
@@ -263,7 +355,7 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency=No
                     except Exception as e:
                         ds_errorMsg.append('[DS Error]' + instrument_ticker + ':' + str(e))
                 except Exception as e:
-                    bbg_errorMsg.append('[BBG Error]' + instrument_ticker + ':' + str(e))                
+                    bbg_errorMsg.append('[BBG Error]' + instrument_ticker + ':' + str(e))
         elif ticker_type == 'DS':
             try:     
                 instrument_metaData_DS = get_metaData(instrument_ticker, 'DS')
@@ -279,21 +371,28 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency=No
                         pass
                 except Exception as e:
                     bbg_errorMsg.append('[BBG Error]' + instrument_ticker + ':' + str(e))
-                    
-                    inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_DS['DS_Ticker'])
-                    if inst_syn.instrument.marketdatatype.name_c == market_data_type.name_c and inst_syn.instrument.market == market:
-                        ds_errorMsg.append('[DS Error] no new instrument is inserted because there is already one with the same datastream ticker')
-                        email_msg = '\n'.join(bbg_errorMsg) + '\n' + '\n'.join(ds_errorMsg) + '\n' + str(instrument_ticker + ':' + e)             
-                        send_email('MShama@quantcapital.de;GJi@quantcapital.de', email_subject, email_msg)
-                        return inst_syn.instrument, Investment.objects.get(instrument=inst_syn.instrument)
+                    try:
+                        inst_syn = Instrumentsynonym.objects.get(code_c=instrument_metaData_DS['DS_Ticker'])
+                        if inst_syn.instrument.marketdatatype.name_c == market_data_type.name_c and inst_syn.instrument.market == market:
+                            ds_errorMsg.append('[DS Error] no new instrument is inserted because there is already one with the same datastream ticker')
+                            email_msg = '\n'.join(bbg_errorMsg) + '\n' + '\n'.join(ds_errorMsg) + '\n'             
+                            send_email('MShama@quantcapital.de;GJi@quantcapital.de', email_subject, email_msg)
+                            return inst_syn.instrument, Investment.objects.get(instrument=inst_syn.instrument)
+                    except ObjectDoesNotExist:
+                        pass
             except Exception as e:
                 ds_errorMsg.append('[DS Error]' + instrument_ticker + ':' + str(e))
     try:
         # try to select market data based on the value from BBG meta data
         if instrument_metaData_BBG and instrument_metaData_BBG['market'] != None and not market:
-            market = Market.objects.get(
-                            iso_code_c= instrument_metaData_BBG['market'] if market == None else market
-                            )
+            if instrument_metaData_BBG and currency and (instrument_metaData_BBG['currency'] != currency.isocode_c):
+                market = None
+                instrument_metaData_BBG['BBG_Ticker'] = None
+                bbg_errorMsg.append('[Warning]' + instrument_ticker + ':' + "Currency does not match with the main market currency please maintain the market and Bloomberg ticker manually")
+            else:
+                market = Market.objects.get(
+                                iso_code_c= instrument_metaData_BBG['market'] if market == None else market
+                                )
     except ObjectDoesNotExist:
         # if the market doesn't exist then create it
         market = Market(
@@ -326,7 +425,7 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency=No
         risk_country.save()
         
     if len(ds_errorMsg) == 0 or len(bbg_errorMsg) == 0:
-        try:
+        try:            
             # try to create a new instrument
             instrument = Instrument(
                                     name_c = instrument_metaData_BBG['name'] if (instrument_metaData_BBG and instrument_metaData_BBG['name']!=None) else instrument_metaData_DS['name'],
@@ -380,10 +479,16 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency=No
                     validity_d = datetime.now().date() if active else None,
                 ).save()
             if instrument_metaData_BBG and instrument_metaData_BBG['ISIN'] != None:
+                isin_code = instrument_metaData_BBG['ISIN']
+            elif instrument_metaData_DS and instrument_metaData_DS['ISIN']:
+                isin_code = instrument_metaData_DS['ISIN']
+            else:
+                isin_code = None
+            if isin_code:
                 Instrumentsynonym(
                     instrument = instrument,
                     codification = Codification.objects.filter(name_c='ISIN')[0],
-                    code_c = instrument_metaData_BBG['ISIN'],
+                    code_c = isin_code,
                     validity_d = datetime.now().date() if active else None,
                 ).save()
                 
@@ -416,4 +521,47 @@ def new_instrument(instrument_ticker, ticker_type, market_data_type, currency=No
         email_msg = '\n'.join(bbg_errorMsg) + '\n' + '\n'.join(ds_errorMsg)
         send_email('MShama@quantcapital.de;GJi@quantcapital.de', email_subject, email_msg)
         return None, None
+    
+@transaction.atomic
+def alter_marketdata_table(table_name, field_name, field_type, field_parameters):
+    '''
+    this function alters the database table and add new fields to it
+    only for market data tables
+    
+    @param table_name: table name to be altered
+    @param field_name: the name of the new field to be added
+    @param field_type: field data type
+    @param field_parameters: parameters of the field (i.e length, max digits, ... etc)
+    '''
+    from django.db import connection
+    
+    sql = "ALTER TABLE " + table_name + " ADD [" +  field_name + "] "
+    if field_type == 'DecimalField':
+        field_type = 'numeric('
+        # parse field parameters [eg: max_digits=x,decimal_places=y]
+        field_parameters = field_parameters.split(sep=',')
+        field_parameters = [s.split(sep='=')[1] for s in field_parameters]
+        field_parameters = ','.join(field_parameters)
+        field_type = field_type + field_parameters
+        field_type = field_type + ')'
+    elif field_type == 'CharField':
+        field_type = 'varchar('
+        # parse field parameters [eg: max_length=x]
+        field_parameters = field_parameters.split(sep='=')[1]
+        field_type = field_type + field_parameters
+        field_type = field_type + ')'
+        pass
+    elif field_type == 'DateField':
+        field_type = 'date'
+        
+    sql = sql + field_type + " NULL"
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql)
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+    
         

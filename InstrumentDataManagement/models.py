@@ -13,8 +13,10 @@ class Marketdatatype(models.Model):
         return self.name_c
     
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'MarketDataType'
+        unique_together = (('name_c',))
+        
         
         
 class Market(models.Model):
@@ -139,7 +141,7 @@ class AssetClass(models.Model):
 class AssetClass_Instrument(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     assetclass = models.ForeignKey(AssetClass, models.DO_NOTHING, db_column='AssetClass_ID')  # Field name made lowercase.
-    instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
+    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE, db_column='Instrument_ID')  # Field name made lowercase.
     mandate = models.ForeignKey(Mandate, models.DO_NOTHING, db_column='Mandate_ID')
     
     class Meta:
@@ -150,7 +152,7 @@ class AssetClass_Instrument(models.Model):
 class Instrumentsynonym(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)  # Field name made lowercase.
     codification = models.ForeignKey(Codification, models.DO_NOTHING, db_column='Codification_ID')  # Field name made lowercase.
-    instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID')  # Field name made lowercase.
+    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE, db_column='Instrument_ID')  # Field name made lowercase.
     validity_d = models.DateField(db_column='Validity_D', blank=True, null=True, default=False)  # Field name made lowercase.
     code_c = models.CharField(db_column='Code_C', max_length=50)  # Field name made lowercase.
 

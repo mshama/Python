@@ -9,40 +9,13 @@ from django.core.exceptions import ObjectDoesNotExist
 
 
 def viewRiskfactors(request):
-    if request.method == 'GET':
-        riskfactors = Riskfactor.objects.all()        
-        context = {
-                   'riskfactors': riskfactors,
-                   }
-        return render(request, 'RiskModelManagement/viewRiskfactors.html', context)
+    riskfactors = Riskfactor.objects.all()        
+    context = {
+               'riskfactors': riskfactors,
+               }
+    return render(request, 'RiskModelManagement/viewRiskfactors.html', context)
     
 def editRiskfactorMapping(request, riskfactor_id=None):
-    if request.method == 'POST':
-        parent_riskfactor = Riskfactor.objects.get(pk=riskfactor_id)
-        hedge_instrument = Instrument.objects.get(pk=request.POST['riskfactorhedgeinstrument'])
-        parent_riskfactor.hedgeinstrument = hedge_instrument
-        parent_riskfactor.save()
-    return redirect('RiskModelManagement:viewRiskfactor', riskfactor_id=riskfactor_id)
-
-def editRiskfactorComposition(request, riskfactor_id=None):
-    if request.method == 'POST':
-        parent_riskfactor = Riskfactor.objects.get(pk=riskfactor_id)
-        
-        current_composition = RiskfactorComposition.objects.filter(riskfactor=parent_riskfactor)
-        for composition_element in current_composition:
-            composition_element.delete()
-                
-        for instrument_id in request.POST.getlist('instrument_mapping_list[]'):
-            reference_instrument = Instrument.objects.get(pk=instrument_id)
-            mandate = Mandate.objects.get(pk=request.POST['mandate'])
-            Riskfactor_Mapping(
-                               reference_instrument=reference_instrument,
-                               riskfactor=parent_riskfactor,
-                               mandate=mandate,
-                               ).save()
-    return redirect('RiskModelManagement:viewRiskfactor', riskfactor_id=riskfactor_id)
-
-def editRiskfactor(request, riskfactor_id=None):
     if request.method == 'POST':
         parent_riskfactor = Riskfactor.objects.get(pk=riskfactor_id)
         if "replaceMapping" in request.POST:
@@ -59,10 +32,58 @@ def editRiskfactor(request, riskfactor_id=None):
                                mandate=mandate,
                                ).save()
     return redirect('RiskModelManagement:viewRiskfactor', riskfactor_id=riskfactor_id)
+
+def editRiskfactorComposition(request, riskfactor_id=None):
+    if request.method == 'POST':
+        parent_riskfactor = Riskfactor.objects.get(pk=riskfactor_id)
+        
+        current_composition = RiskfactorComposition.objects.filter(parent_riskfactor=parent_riskfactor)
+        for composition_element in current_composition:
+            composition_element.delete()
+                
+        for component_riskfactor_id, weight in zip(request.POST.getlist('riskfactor[]'),request.POST.getlist('weight[]')):
+            if component_riskfactor_id:
+                component_riskfactor = Riskfactor.objects.get(pk=component_riskfactor_id)
+                RiskfactorComposition(
+                                      parent_riskfactor=parent_riskfactor,
+                                      riskfactor=component_riskfactor,
+                                      weight_n=weight,
+                                      ).save()
+    return redirect('RiskModelManagement:viewRiskfactor', riskfactor_id=riskfactor_id)
+
+def editRiskfactor(request, riskfactor_id=None):
+    if request.method == 'POST':
+        
+        parent_riskfactor = Riskfactor.objects.get(pk=riskfactor_id)
+        hedge_instrument = Instrument.objects.get(pk=request.POST['riskfactorhedgeinstrument'])
+        riskfactor_name = request.POST['riskfactor_name']
+        if len(riskfactor_name) == 0:
+            riskfactor_name = None
+        
+        parent_riskfactor.hedgeinstrument = hedge_instrument
+        parent_riskfactor.name_c = riskfactor_name
+        
+        parent_riskfactor.save()
+    return redirect('RiskModelManagement:viewRiskfactor', riskfactor_id=riskfactor_id)
+
+def deleteRiskfactor(request, riskfactor_id=None):
+    if riskfactor_id:
+        riskfactor = Riskfactor.objects.get(pk=riskfactor_id)
+        riskfactor.delete()
+        
+        return redirect('RiskModelManagement:viewRiskfactors')
+
+def deleteRiskfactorMapping(request, mapping_id=None):
+    riskfactormapping = Riskfactor_Mapping.objects.get(id=mapping_id)
+    riskfactor = riskfactormapping.riskfactor
+    riskfactormapping.delete()
+    return redirect('RiskModelManagement:viewRiskfactor', riskfactor_id=riskfactor.id)
     
 def viewRiskfactor(request, riskfactor_id=None):
     if request.method == 'POST' and 'riskfactorList' in request.POST:
         selectedRiskfactor = request.POST['riskfactorList']
+        if 'deleteRiskfactor' in request.POST:
+            return deleteRiskfactor(request, riskfactor_id=selectedRiskfactor)
     elif request.method == 'GET' and riskfactor_id:
         selectedRiskfactor = riskfactor_id
     else:
@@ -70,7 +91,7 @@ def viewRiskfactor(request, riskfactor_id=None):
     
     riskfactor = Riskfactor.objects.get(pk=selectedRiskfactor)
     try:
-        riskfactor_mapping = Riskfactor_Mapping.objects.filter(riskfactor=riskfactor)
+        riskfactor_mapping = Riskfactor_Mapping.objects.filter(riskfactor=riskfactor).order_by('reference_instrument__name_c')
     except ObjectDoesNotExist:
         riskfactor_mapping = None
         
@@ -80,7 +101,7 @@ def viewRiskfactor(request, riskfactor_id=None):
         riskfactor_composition = None
         
     hedge_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Derivative'])
-    mapping_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Equity','Fixed_Income','Derivative'])
+    mapping_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Equity','Fixed_Income','Derivative']).order_by('name_c')
     index_list = Instrument.objects.filter(marketdatatype__type_c__in=['Index','Currency'])
     riskfactors = Riskfactor.objects.all()
     mandates = Mandate.objects.all()
@@ -101,7 +122,7 @@ def viewRiskfactor(request, riskfactor_id=None):
 def addRiskfactor(request):
     if request.method == 'GET':
         hedge_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Derivative'])
-        mapping_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Equity','Fixed_Income','Derivative'])
+        mapping_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Equity','Fixed_Income','Derivative']).order_by('name_c')
         index_list = Instrument.objects.filter(marketdatatype__type_c__in=['Index','Currency'])
         riskfactors = Riskfactor.objects.all()
         mandates = Mandate.objects.all()
@@ -115,13 +136,16 @@ def addRiskfactor(request):
                 }
         return render(request, 'RiskModelManagement/addRiskfactor.html', context)
     elif request.method == 'POST':
+        riskfactor_name = request.POST['riskfactor_name']
+        if len(riskfactor_name) == 0:
+            riskfactor_name = None
         riskfactor_instrument = Instrument.objects.get(pk=request.POST['riskfactorinstrument']) 
         if request.POST['riskfactorhedgeinstrument']:
             hedge_instrument = Instrument.objects.get(pk=request.POST['riskfactorhedgeinstrument'])
         else:
             hedge_instrument = None
             
-        parent_riskfactor = Riskfactor(riskfactorinstrument=riskfactor_instrument, hedgeinstrument=hedge_instrument)
+        parent_riskfactor = Riskfactor(name_c=riskfactor_name, riskfactorinstrument=riskfactor_instrument, hedgeinstrument=hedge_instrument)
         parent_riskfactor.save()
         
         if ('has_composition' in request.POST) and len(request.POST.getlist('riskfactor[]')) > 0:

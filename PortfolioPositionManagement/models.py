@@ -50,7 +50,13 @@ from InstrumentDataManagement.models import Instrument, Currency
 class Investment(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)
     portfolio = models.ForeignKey(Portfolio, models.DO_NOTHING, db_column='Portfolio_ID', blank=True, null=True)
-    instrument = models.ForeignKey(Instrument, models.DO_NOTHING, db_column='Instrument_ID', blank=True, null=True)
+    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE, db_column='Instrument_ID', blank=True, null=True)
+    
+    def __str__(self):
+        if self.portfolio:
+            return self.portfolio.name_c
+        else:
+            return self.instrument.name_c
     
     class Meta:
         managed = False
@@ -59,7 +65,6 @@ class Investment(models.Model):
 class Status(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)
     name_c = models.CharField(db_column='Name_C', max_length=50)
-    denomination_c = models.CharField(db_column='Denomination_C', max_length=50)
     
     def __str__(self):
         return self.name_c
@@ -71,7 +76,6 @@ class Status(models.Model):
 class Type(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)
     name_c = models.CharField(db_column='Name_C', max_length=50)
-    denomination_c = models.CharField(db_column='Denomination_C', max_length=50)
     
     def __str__(self):
         return self.name_c
@@ -119,10 +123,11 @@ class Transaction(models.Model):
     volume_fc_n = models.DecimalField(db_column='Volume_FC_N', max_digits=18, decimal_places=2, blank=True, null=True)
     tradedate_d = models.DateField(db_column='TradeDate_D')
     valuedate_d = models.DateField(db_column='ValueDate_D', blank=True, null=True)
+    createdate_d = models.DateField(db_column='CreateDate_D', blank=True, null=True)
     create_user = models.ForeignKey(User, models.DO_NOTHING, db_column='Create_User_ID', related_name='transaction_create_user', blank=True, null=True)
     nominal_value_bond_n = models.DecimalField(db_column='Nominal_Value_Bond_N', max_digits=18, decimal_places=2, blank=True, null=True)
-    original_input_user = models.ForeignKey(User, models.DO_NOTHING, db_column='Original_Input_User_ID', related_name='transaction_original_input_user', blank=True, null=True)
+    original_input_usergroup = models.ForeignKey(Group, models.DO_NOTHING, db_column='Original_Input_UserGroup_ID', related_name='transaction_original_input_user_group', blank=True, null=True)
     
     class Meta:
         managed = False
-        db_table = 'Transaction'
+        db_table = 'Transaction'       

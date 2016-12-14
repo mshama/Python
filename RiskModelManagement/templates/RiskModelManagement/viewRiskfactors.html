@@ -11,11 +11,12 @@
 	<br><br>
 	<select name="riskfactorList" id="riskfactorList" size="20" style="width: 600px;overflow:auto">
     {% for riskfactor in riskfactors %}
-		<option value="{{ riskfactor.id }}">{{ riskfactor.riskfactorinstrument.name_c }}</option>
+		<option value="{{ riskfactor.id }}">{{ riskfactor.name_c | default_if_none:riskfactor.riskfactorinstrument }}</option>
 	{% endfor %}
 	</select>
 	<br><br>
 	<input type='submit' name="showRiskfactorDetails" value='Show riskfactor details'/>
 	<a class='button-link' href="{% url 'RiskModelManagement:addRiskfactor'%}">Add new riskfactor</a>
+	<input type='submit' name="deleteRiskfactor" value='Delete Riskfactor'/>
 </form>
 {% endblock %}

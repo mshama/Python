@@ -10,6 +10,36 @@ import re
 import pycountry
 import pandas as pd
 
+def get_bond_metaData(instrument):
+    instrumentFieldList = ['NOMV', 'LF', 'AMOR', 'RD','BTYP','C', 'FRC','FRM',]
+    DWE = create_DataStreamConnection()
+    try:
+        instrumentData = DWE.fetch(instrument, instrumentFieldList, static=True)
+        
+        instrumentData = remove_invalid(instrumentData, instrumentFieldList)
+    
+        return {
+                'nominal':instrumentData['NOMV'][0],
+                'life':instrumentData['LF'][0], 
+                'amortisation_type':instrumentData['AMOR'][0], 
+                'redemption':instrumentData['BTYP'][0],
+                'bond_type':instrumentData['BTYP'][0],
+                'coupon_current':instrumentData['C'][0], 
+                'coupon_floating':instrumentData['FRC'][0], 
+                'floating_real_margin':instrumentData['FRM'][0],
+                }
+    except Exception:
+        return {
+                'nominal':None,
+                'life':None, 
+                'amortisation_type':None, 
+                'redemption':None,
+                'bond_type':None,
+                'coupon_current':None, 
+                'coupon_floating':None, 
+                'floating_real_margin':None,
+                }
+
 def create_DataStreamConnection():
     return Datastream(username="DS:ZQAJ001", password="POINT954")
 
@@ -148,9 +178,8 @@ def get_metaData_ISIN(ISIN, instrument_type, market=None):
             return get_metaData_BBG(main_ticker,instrument_type)
         else:
             return get_metaData_BBG(ticker_list['security'][0],instrument_type)
-    except TimeoutError:
-        print('connection to BBG server cannot be established. make sure that the RPC service is running')
-        return None
+    except TimeoutError:        
+        return TimeoutError('connection to BBG server cannot be established. make sure that the RPC service is running')
 
 def get_metaData_BBG(instrument,instrument_type):
     instrument_data = None
@@ -158,7 +187,7 @@ def get_metaData_BBG(instrument,instrument_type):
         from xmlrpc import client
         proxy = client.ServerProxy('http://192.168.100.20:8080')
         main_market_field = get_main_market_field(instrument_type)
-        fields = ['NAME', 'ID_ISIN', 'CNTRY_OF_RISK', 'COUNTRY_ISO', 'FUT_CONT_SIZE', 'OPT_STRIKE_PX']
+        fields = ['NAME', 'ID_ISIN', 'CNTRY_OF_RISK', 'COUNTRY_ISO', 'FUT_CONT_SIZE', 'OPT_STRIKE_PX','CRNCY']
         if main_market_field:
             fields.append(main_market_field)
         instrument_data = proxy.get_bloomberg_instr_meta_data(instrument, fields)
@@ -169,6 +198,7 @@ def get_metaData_BBG(instrument,instrument_type):
                             'BPV':instrument_data['FUT_CONT_SIZE'],
                             'country': str(pycountry.countries.get(alpha_2=instrument_data['COUNTRY_ISO']).alpha_3) if instrument_data['COUNTRY_ISO']!='NULL' else None,
                             'cntry_of_risk': str(pycountry.countries.get(alpha_2=instrument_data['CNTRY_OF_RISK']).alpha_3) if instrument_data['CNTRY_OF_RISK']!='NULL' else None,
+                            'currency': instrument_data['CRNCY'],
                             'strike': str(instrument_data['OPT_STRIKE_PX']),
                             'expiry_date':None,
                             'market': str(instrument_data[main_market_field]) if main_market_field else None,
@@ -176,9 +206,8 @@ def get_metaData_BBG(instrument,instrument_type):
         
         for key, value in instrument_data.items():
             instrument_data[key] = value if value != 'NULL' else None
-    except TimeoutError:
-        print('connection to BBG server cannot be established. make sure that the RPC service is running')
-        return None
+    except TimeoutError:        
+        return TimeoutError('connection to BBG server cannot be established. make sure that the RPC service is running')
     except Exception as e:
         print('an error while reading data:' + e)
         instrument_data =  {'BBG_Ticker':None,
@@ -200,35 +229,7 @@ def get_metaData(instrument, datasource, instrument_type=''):
     elif(datasource == 'BBG'):
         return get_metaData_BBG(instrument,instrument_type)
 
-def get_bond_metaData(instrument):
-    instrumentFieldList = ['NOMV', 'LF', 'AMOR', 'RD','BTYP','C', 'FRC','FRM',]
-    DWE = create_DataStreamConnection()
-    try:
-        instrumentData = DWE.fetch(instrument, instrumentFieldList, static=True)
-        
-        instrumentData = remove_invalid(instrumentData, instrumentFieldList)
-    
-        return {
-                'nominal':instrumentData['NOMV'][0],
-                'life':instrumentData['LF'][0], 
-                'amortisation_type':instrumentData['AMOR'][0], 
-                'redemption':instrumentData['BTYP'][0],
-                'bond_type':instrumentData['BTYP'][0],
-                'coupon_current':instrumentData['C'][0], 
-                'coupon_floating':instrumentData['FRC'][0], 
-                'floating_real_margin':instrumentData['FRM'][0],
-                }
-    except Exception:
-        return {
-                'nominal':None,
-                'life':None, 
-                'amortisation_type':None, 
-                'redemption':None,
-                'bond_type':None,
-                'coupon_current':None, 
-                'coupon_floating':None, 
-                'floating_real_margin':None,
-                }
+
 
 def get_DS_PriceData(instrument, fields, lastPriceDate):
     '''
@@ -323,4 +324,3 @@ def get_PriceData(datasource, instrument, fields, lastPriceDate='2000-01-01'):
         return get_DS_PriceData(instrument, fields, lastPriceDate)
     elif(datasource == 'BBG'):
         return get_BBG_PriceData(instrument, fields, lastPriceDate)
-        

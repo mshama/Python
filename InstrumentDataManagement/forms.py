@@ -16,7 +16,7 @@ class newMarketDataTypeForm(forms.ModelForm):
         fields = ('name_c', 'type_c')
         widgets = {
             'name_c': forms.TextInput(attrs={ 'required': 'true' }),
-            'type_c': forms.Select(choices = ([('Stock','Equity'), ('Bond','Bond'),('Derivative','Derivative'), ('InterestRate','InterestRate'), ]))
+            'type_c': forms.Select(choices = ([('Stock','Equity'), ('Bond','Bond'),('Derivative','Derivative'), ('InterestRate','InterestRate'), ('Currency','Currency'), ]))
         }
         labels = {
             'name_c': _('Name:'),
@@ -110,6 +110,12 @@ class newInstrumentForm(forms.Form):
     country = forms.ModelChoiceField(label='Country:', queryset=Country.objects.all(), required=False,)
     risk_country = forms.ModelChoiceField(label='Risk Country:', queryset=Country.objects.all(), required=False,)
     names = forms.CharField(label='Instruments:', widget=forms.Textarea)
+
+class instrumentSearchForm(forms.Form):
+    source = forms.ChoiceField(label='Source:',  choices = ([('DS','DataStream'), ('BBG','Bloomberg'), ('ISIN','ISIN'),]),required=True,)
+    marketdatatype = forms.ModelChoiceField(label='Market Data Type:', queryset=Marketdatatype.objects.all(), required=False,)
+    names = forms.CharField(label='Instruments:', widget=forms.Textarea)
+    market = forms.ModelChoiceField(label='Market:', queryset=Market.objects.all(), required=False,)
     
 class newInstrumentSynonymForm(forms.Form):
     codification = forms.ModelChoiceField(label='Code type:', queryset=Codification.objects.all())

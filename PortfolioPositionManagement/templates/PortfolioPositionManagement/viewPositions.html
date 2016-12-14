@@ -1,10 +1,63 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="ISO-8859-1">
-<title>Insert title here</title>
-</head>
-<body>
-
-</body>
-</html>
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% load staticfiles %}
+	{% include 'PortfolioPositionManagement/includes.html' %}
+	<table style="border-collapse: collapse; width: 90%;margin-left: auto;margin-right: auto;text-align:left" border=1 id="list-table">
+		<tr>
+			<th> </th>
+			<th>Parent investment</th>
+			<th>Investment</th>
+			<th>Status</th>
+			<th>From date</th>
+			<th>To date</th>
+			<th>Quantity</th>
+			<th>Price cost</th>
+			<th>Price valuation KVG</th>
+			<th>Currency</th>
+			<th>Exchange rate</th>
+			<th>Original input user group</th>
+			<th>Market value KVG EUR</th>
+			<th>Market value KVG foreign currency</th>
+			<th>Nominal value for bonds</th>
+			
+		</tr>
+		{% for position in positions %}
+		<tr>
+			<td >
+				<a href="{% url 'PortfolioPositionManagement:editPosition' position.id %}">
+					<img src="{% static 'home/images/edit.png' %}"/>
+				</a>
+				|
+				<a href="{% url 'PortfolioPositionManagement:deletePosition' position.id %}">
+					<img src="{% static 'home/images/delete.png' %}"/>
+				</a>
+				
+			</td>
+			<td>{{ position.parent_investment }}</td>
+			<td>{{ position.investment }}</td>
+			<td>{{ position.status }}</td>
+			<td>{{ position.positiondatefrom_d }}</td>
+			<td>{{ position.positiondateto_d | default_if_none:"" }}</td>
+			<td>{{ position.quantity_n }}</td>
+			<td>{{ position.price_cost_n }}</td>
+			<td>{{ position.price_valuation_kvg_n }}</td>
+			<td>{{ position.currency }}</td>
+			<td>{{ position.exchangerate_n }}</td>
+			<td>{{ position.original_input_usergroup }}</td>
+			<td>{{ position.market_value_kvg_eur_n | default_if_none:"" }}</td>
+			<td>{{ position.market_value_kvg_fc_n | default_if_none:"" }}</td>
+			<td>{{ position.nominal_value_bond_n | default_if_none:"" }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	
+	<script language="javascript" type="text/javascript">
+		var filter_config = 	{
+				paging: true,
+				paging_length: 100,
+				rows_counter: true,
+				btn_reset: true,
+			};
+		setFilterGrid("list-table",filter_config);
+	</script>
+{% endblock %}

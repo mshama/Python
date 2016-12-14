@@ -1,0 +1,50 @@
+<div id="dbfield-overlay" class="overlay-form">
+	<div>
+		<h3><label> Enter New Database field</label></h3>
+		<form action="{% url 'MarketDataManagement:manageMapping'%}" method="POST">
+		    {% csrf_token %}
+		    Name: <input name="field_name" type="text" />
+		    <br><br>
+		    Data source: 
+		    <select name="data_source" onchange="updateDatabaseTables()">
+		    	<option value="DS" selected> Datastream </option>
+		    	<option value="BBG"> Bloomberg </option>
+		    	<option value="GR"> Golden record </option>
+		    </select>
+		    <br><br>
+		    Related tables: 
+		    <select name="related_databasetables" id="related_databasetables" multiple>
+		    	{% for databasetable in databasetable_list %}
+		    		{% if databasetable.datasource_c == 'DS' %}
+					<option value="{{ databasetable.id }}" class ='{{ databasetable.datasource_c }}-option'>
+						{{ databasetable.denomincation_c }}
+					</option>
+					{% elif databasetable.datasource_c == 'BBG' %}
+					<option value="{{ databasetable.id }}" class ='{{ databasetable.datasource_c }}-option' disabled>
+						{{ databasetable.denomincation_c }}
+					</option>
+					{% elif databasetable.datasource_c == 'GR' %}
+					<option value="{{ databasetable.id }}" class ='{{ databasetable.datasource_c }}-option' disabled>
+						{{ databasetable.denomincation_c }}
+					</option>
+					{% endif %}
+				{% endfor %}
+		    </select>
+		    <br><br>
+		    Field type:
+		    <select id='fieldtype-select' name="fieldtype" onchange="setFieldParametersOptions()" required>
+		    	<option value=""> ----- </option>
+		    	<option value="DecimalField"> Numeric </option>
+		    	<option value="DateField"> Date </option>
+		    	<option value="CharField"> Text </option>
+		    </select>
+		    <br><br>
+		    <div id="field-parameters-div">
+		    </div>
+		    <br /> 
+		    <input name="newDBField" type="submit" value="Submit" />
+		</form>
+	<a href='#' onclick='overlayClick("dbfield-overlay")'>close</a>
+	<p>*please do not forget to update the database tables/application models if you have not made this already</p>
+	</div>
+</div>

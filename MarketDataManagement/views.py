@@ -2,9 +2,11 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.db.models import Max
 from django.db.models import Q
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
 # from django.template.context_processors import request
 # from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+from django.db import models
 
 # built in libraries
 # import pandas as pd
@@ -16,7 +18,7 @@ import numpy as np
 from dataconnections.datasource import get_PriceData, get_static_BBG,\
     get_BBG_PriceData
 
-from data_saving.saving_functions import new_instrument
+from data_saving.saving_functions import new_instrument, alter_marketdata_table
 
 # model imports
 from .models import MarketDataField_Mapping 
@@ -26,13 +28,16 @@ from .models import MarketData_Equity_C, MarketData_Fixed_Income_C, MarketData_D
         MarketData_Index_C
 from .models import MarketData_Equity_Bloomberg_C, MarketData_Fixed_Income_Bloomberg_C, MarketData_Derivative_Bloomberg_C, \
         MarketData_InterestRate_Bloomberg_C, MarketData_Index_Bloomberg_C
-from InstrumentDataManagement.models import Instrument, Instrumentsynonym, Codification,\
+from InstrumentDataManagement.models import Instrumentsynonym, Codification,\
     Marketdatatype
 
 # form imports
 from InstrumentDataManagement.forms import newMarketDataTypeForm
 from MarketDataManagement.forms import newGoldenRecordFieldForm, newDatasourceFieldForm, newFieldMappingForm
 import data_saving
+from MarketDataManagement.models import DatabaseTable, DatasourceField,\
+    DatabaseTable_DataSourceField_Mapping, GoldenRecordField,\
+    DatabaseTable_GoldenRecordField_Mapping
 
 def price2LogRet(price1, price2):
     try:
@@ -43,32 +48,38 @@ def price2LogRet(price1, price2):
 
 # Create your views here.
 def manageMapping(request, condition=''):
+    errors = None
     if request.method == 'POST':
         if 'newFieldMapping' in request.POST:
-            addMapping(request)
+            errors = addMapping(request)
         elif 'newMarketDataType' in request.POST:
-            newMarketDataType(request)
+            errors = newMarketDataType(request)
         elif 'newGoldenRecordField' in request.POST:
-            newGoldenRecordField(request)
-        elif 'newDatasourceField' in request.POST:
-            newDatasourceField(request)
+            errors = newGoldenRecordField(request)
+        elif 'newDBField' in request.POST:
+            errors = newDBField(request)
     
     if condition == 'active':
         marketdatafield_mapping = MarketDataField_Mapping.objects.exclude(valid_to_d__isnull=False)
     else:
         marketdatafield_mapping = MarketDataField_Mapping.objects.all()
+        
+    databasetable_list = DatabaseTable.objects.all().order_by('datasource_c')
     
     fieldMappingForm = newFieldMappingForm()
     marketDataTypeForm = newMarketDataTypeForm()
     goldenrecordfieldForm = newGoldenRecordFieldForm()
     datasourcefieldForm = newDatasourceFieldForm()
     context = {
+               'databasetable_list': databasetable_list,
                'field_mapping': marketdatafield_mapping,
                'fieldMappingForm': fieldMappingForm,
                'marketDataTypeForm': marketDataTypeForm,
                'goldenrecordfieldForm': goldenrecordfieldForm,
                'datasourcefieldForm': datasourcefieldForm,
     }
+    if errors:
+        context['errors'] = errors
     return render(request, 'MarketDataManagement/viewMapping.html', context)
             
 def addMapping(request):
@@ -94,10 +105,63 @@ def newGoldenRecordField(request):
     if not form.save():
         return False
 
-def newDatasourceField(request):
-    form = newDatasourceFieldForm(request.POST)
-    if not form.save():
-        return False
+def newDBField(request):
+    
+    selectedDatasetables_id = request.POST.getlist('related_databasetables')
+    
+    field_type = request.POST['fieldtype']
+    data_source = request.POST['data_source']
+    field_name = request.POST['field_name']
+    
+    #prepare field parameters
+    if field_type == 'DecimalField':
+        max_digits = request.POST['max_digits']
+        decimal_places = request.POST['decimal_places']
+        field_parameters = 'max_digits=' + str(max_digits) + ',decimal_places=' + str(decimal_places)
+    elif field_type == 'CharField':
+        max_length = request.POST['max_length']
+        field_parameters = 'max_length=' + str(max_length)
+    else:
+        field_parameters = None
+    
+    if data_source == 'GR':
+        try:
+            goldenrecord_field = GoldenRecordField.objects.get(name_c = field_name)
+            goldenrecord_field.fieldtype_c = field_type
+            goldenrecord_field.fieldparameters_c = field_parameters
+            goldenrecord_field.save()
+        except ObjectDoesNotExist:
+            goldenrecord_field = GoldenRecordField(
+                                               name_c = field_name,
+                                               fieldtype_c = field_type,
+                                               fieldparameters_c = field_parameters
+                                               )
+            goldenrecord_field.save()
+        
+        for databasetable_id in selectedDatasetables_id:
+            databasetable = DatabaseTable.objects.get(pk=databasetable_id)
+            DatabaseTable_GoldenRecordField_Mapping(databasetable=databasetable, goldenrecordfield=goldenrecord_field).save()
+            alter_marketdata_table(databasetable.name_c, goldenrecord_field.name_c, goldenrecord_field.fieldtype_c, goldenrecord_field.fieldparameters_c)
+    else:
+        try:
+            datasource_field = DatasourceField.objects.get(name_c = field_name)
+            datasource_field.fieldtype_c = field_type
+            datasource_field.fieldparameters_c = field_parameters
+            datasource_field.save()
+        except ObjectDoesNotExist:
+            datasource_field = DatasourceField(
+                                               name_c = field_name,
+                                               data_source_c = data_source,
+                                               fieldtype_c = field_type,
+                                               fieldparameters_c = field_parameters
+                                               )
+            datasource_field.save()
+        
+        for databasetable_id in selectedDatasetables_id:
+            databasetable = DatabaseTable.objects.get(pk=databasetable_id)
+            DatabaseTable_DataSourceField_Mapping(databasetable=databasetable, datasourcefield=datasource_field).save()
+            alter_marketdata_table(databasetable.name_c, datasource_field.name_c, datasource_field.fieldtype_c, datasource_field.fieldparameters_c)
+    
     
 def changeMappingActivation(request, mapping_id=''):
     if request.method == 'GET':
@@ -195,7 +259,10 @@ def updateData(request, instrumentList=[]):
                                                                             ).values(
                                                                                      'instrument_id', 'instrument__name_c', 'code_c'
                                                                                      ).annotate(max_validity_d=Max('validity_d')).all())
-            fullData = False
+            if 'fullData' in request.POST:
+                fullData = True
+            else:
+                fullData = False
         context = {
                    'source': request.POST['source'],
                    'instrumentList': instrumentList,
@@ -282,11 +349,35 @@ def get_instrumentData(source, instrument):
     except Exception as e:
         print("error reading instrument data, instrument:" + instrument.bbname + ",source:" + source)   
 
+def add_missing_pricetable_fields(price_table, fields_table):
+    dbfields = eval(fields_table).objects.filter(databasetables__name_c=price_table._meta.db_table)
+    
+    for field in dbfields:
+        field_type = eval('models.'+field.fieldtype_c )
+        field_parameters = dict(e.split('=') for e in field.fieldparameters_c.split(','))
+        for key, _ in field_parameters.items():
+            field_parameters[key] = int(field_parameters[key])
+        class_field = field_type(
+                                 name=re.sub('[^0-9a-zA-Z_]+', '_', field.name_c.lower()), 
+                                 db_column=field.name_c,
+                                 **field_parameters
+                                 )
+        class_field.model = price_table
+        class_field.column = field.name_c
+        class_field.attname = class_field.name
+        class_field.concrete = True
+        try:
+            price_table._meta.get_field(class_field.name)
+        except FieldDoesNotExist:
+            price_table._meta.add_field(class_field)
+
 def insert_instrumentData(instrumentSyn, priceData, source):
     if(source == 'DS'):
         if(instrumentSyn.instrument.marketdatatype.type_c == 'Equity'):
             priceDataTable = eval('MarketData_Equity_DataStream_C')
+            add_missing_pricetable_fields(priceDataTable,'DatasourceField')
             goldenRecordTable = eval('MarketData_Equity_C')
+            add_missing_pricetable_fields(goldenRecordTable,'GoldenRecordField')
         elif(instrumentSyn.instrument.marketdatatype.type_c == 'Fixed_Income'):
             priceDataTable = eval('MarketData_Fixed_Income_DataStream_C')
             goldenRecordTable = eval('MarketData_Fixed_Income_C')
@@ -299,6 +390,9 @@ def insert_instrumentData(instrumentSyn, priceData, source):
         elif(instrumentSyn.instrument.marketdatatype.type_c == 'Index'):
             priceDataTable = eval('MarketData_Index_DataStream_C')
             goldenRecordTable = eval('MarketData_Index_C')
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Currency'):
+            priceDataTable = eval('MarketData_Currency_DataStream_C')
+            goldenRecordTable = eval('MarketData_Currency_C')
             
         insert_data(instrumentSyn, priceData, priceDataTable, goldenRecordTable,source)
     elif(source == 'BBG'):
@@ -317,6 +411,9 @@ def insert_instrumentData(instrumentSyn, priceData, source):
         elif(instrumentSyn.instrument.marketdatatype.type_c == 'Index'):
             priceDataTable = eval('MarketData_Index_Bloomberg_C')
             goldenRecordTable = eval('MarketData_Index_C')
+        elif(instrumentSyn.instrument.marketdatatype.type_c == 'Currency'):
+            priceDataTable = eval('MarketData_Currency_Bloomberg_C')
+            goldenRecordTable = eval('MarketData_Currency_C')
         insert_data(instrumentSyn, priceData, priceDataTable, goldenRecordTable,source)
         
 def insert_source_price_record(instrument, priceRecord, priceDataTable, price_date):
@@ -326,7 +423,7 @@ def insert_source_price_record(instrument, priceRecord, priceDataTable, price_da
         for key in priceRecord:
             setattr(priceRecordDB, key, priceRecord[key])
         # update data source price record
-        priceRecordDB.update(update_fields=priceRecord.keys())
+        priceRecordDB.save()
     except ObjectDoesNotExist as e:
         try:
             # insert into data source table
@@ -525,7 +622,7 @@ def insert_golden_record(instrumentSyn, priceRecord, goldenRecordTable, fieldMap
                 goldenRecordDB.intra_log_return_n = price2LogRet(float(goldenRecordDB.intraday_price_n), previous_price)
                 update_fields.extend(['intra_log_return_n'])
         # update golden record price record
-        goldenRecordDB.update(update_fields)
+        goldenRecordDB.save()
         
         if source == 'DS':
             return float(goldenRecordDB.eod_price_n)

@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from django import forms
 
-from PortfolioPositionManagement.models import Mandate
+from PortfolioPositionManagement.models import Mandate, Position
 
 
 class newMandateForm(forms.ModelForm):
@@ -21,3 +21,10 @@ class newMandateForm(forms.ModelForm):
         widgets = {
             'name_c': forms.TextInput(attrs={ 'required': 'true' }),
         }
+        
+class positionForm(forms.ModelForm):
+    
+    class Meta:
+        model = Position
+        
+        fields = ('status', 'quantity_n', 'price_cost_n', 'price_valuation_kvg_n', 'currency',)

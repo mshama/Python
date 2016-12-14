@@ -1,10 +1,55 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="ISO-8859-1">
-<title>Insert title here</title>
-</head>
-<body>
-
-</body>
-</html>
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% include 'PortfolioPositionManagement/includes.html' %}
+	<table style="width: 90%;margin-left: auto;margin-right: auto;text-align:left" border=1 id="list-table">
+		<tr>
+			<th>Parent investment</th>
+			<th>Investment</th>
+			<th>Currency</th>
+			<th>Status</th>
+			<th>Type</th>
+			<th>Quantity</th>
+			<th>Price</th>
+			<th>Exchangerate</th>
+			<th>Volume EUR</th>
+			<th>Volume Foreign Currency</th>
+			<th>TradeData</th>
+			<th>Value Date</th>
+			<th>Create Date</th>
+			<th>Create User</th>
+			<th>Nominal Value Bond</th>
+			<th>Original input user group</th>
+			
+		</tr>
+		{% for transaction in transactions %}
+		<tr>
+			<td>{{ transaction.parent_investment }}</td>
+			<td>{{ transaction.investment }}</td>
+			<td>{{ transaction.currency }}</td>
+			<td>{{ transaction.status }}</td>
+			<td>{{ transaction.type }}</td>
+			<td>{{ transaction.quantity_n }}</td>
+			<td>{{ transaction.price_n }}</td>
+			<td>{{ transaction.exchangerate_n }}</td>
+			<td>{{ transaction.volumne_eur_n }}</td>
+			<td>{{ transaction.volume_fc_n }}</td>
+			<td>{{ transaction.tradedate_d }}</td>
+			<td>{{ transaction.valuedate_d }}</td>
+			<td>{{ transaction.createdate_d }}</td>
+			<td>{{ transaction.create_user }}</td>
+			<td>{{ transaction.nominal_value_bond_n | default_if_none:"" }}</td>
+			<td>{{ transaction.original_input_usergroup }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	
+	<script language="javascript" type="text/javascript">
+		var filter_config = 	{
+				paging: true,
+				paging_length: 100,
+				rows_counter: true,
+				btn_reset: true,
+			};
+		setFilterGrid("list-table",filter_config);
+	</script>
+{% endblock %}

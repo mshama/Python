@@ -1,0 +1,11 @@
+<div id="confirm-delete-overlay" class="overlay-form">
+	<div>
+		<h3><label> Are you sure you want to delete this instrument?</label></h3>
+		<form action="{% url 'InstrumentDataManagement:deleteInstrument' instrument.id%}" method="POST">
+		    {% csrf_token %}
+		    <br /> 
+		    <input name="deleteInstrument" type="submit" value="Submit" class="submit-button"/>
+		</form>
+	<a href='#' onclick='overlayClick("confirm-delete-overlay")'>close</a>
+	</div>
+</div>

@@ -12,6 +12,12 @@
 					Riskfactor:
 				</th>
 				<td style="text-align:left">
+					{{ riskfactor.name_c | default_if_none:"" }}
+				</td>
+				<th>
+					Riskfactor index:
+				</th>
+				<td style="text-align:center">
 					{{ riskfactor.riskfactorinstrument }}
 				</td>
 				<th style="text-align:right">
@@ -71,6 +77,11 @@
 				</td>
 				<td style="text-align:right">
 					{{ mapping_element.reference_instrument }}
+				</td>
+				<td colspan=4 style="text-align:right">
+					<a href="{% url 'RiskModelManagement:deleteRiskfactorMapping' mapping_element.id %}">
+						<img src="{% static 'home/images/delete.png' %}"/>
+					</a>
 				</td>
 			</tr>
 		{% endfor %}

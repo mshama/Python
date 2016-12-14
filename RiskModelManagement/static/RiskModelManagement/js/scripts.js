@@ -10,7 +10,6 @@ function overlayClick(overlayID) {
 function deleteRowEditTable(rowid) {
 	
 	var count = $('#riskfactor-composition-table-edit tr').length;
-	console.log(count)
 	if(count > 2) {
 		var row = document.getElementById(rowid);
 		var table = row.parentNode;
@@ -19,6 +18,10 @@ function deleteRowEditTable(rowid) {
 		if ( !table )
 			return;
 		table.deleteRow(row.rowIndex);
+	}
+	else if(count == 2) {
+		$('select[name="riskfactor[]"]').val('');
+		$('input[name="weight[]"]').val('');
 	}
 }
 
@@ -40,7 +43,7 @@ function addRow(){
 	
 }
 
-function sortRiskfactor() {
+function sortRiskfactors() {
 	
 	var riskfactorListSelect = document.getElementById("riskfactorList");
 	

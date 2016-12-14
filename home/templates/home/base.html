@@ -53,6 +53,9 @@
 									<a href="{% url 'InstrumentDataManagement:viewInstrument' %}">View instruments</a>						
 								</li>
 								<li class="dropdown-menu">
+									<a href="{% url 'InstrumentDataManagement:searchInstruments' %}">Search instruments</a>						
+								</li>
+								<li class="dropdown-menu">
 									<a href="{% url 'InstrumentDataManagement:viewAssetClasses' %}">Asset classes</a>						
 								</li>					
 							</ul>
@@ -79,16 +82,19 @@
 						<div class="dropdown-content">
 							<ul class="dropdown-menu-list">
 								<li class="dropdown-menu">
-									<a href="{% url 'PortfolioPositionManagement:viewPortfolios'%}">View portfolios</a>						
+									<a href="{% url 'PortfolioPositionManagement:viewPortfolios' %}">View portfolios</a>						
 								</li>
 								<li class="dropdown-menu">
-									<a href="{% url 'PortfolioPositionManagement:viewMandates'%}">View Mandates</a>						
+									<a href="{% url 'PortfolioPositionManagement:viewMandates' %}">View Mandates</a>						
 								</li>
 								<li class="dropdown-menu">
 									<a href="#">Add transactions</a>						
 								</li>
 								<li class="dropdown-menu">
-									<a href="#">View positions</a>						
+									<a href="{% url 'PortfolioPositionManagement:viewPositions' %}">View positions</a>						
+								</li>
+								<li class="dropdown-menu">
+									<a href="{% url 'PortfolioPositionManagement:viewTransactions' %}">View transactions</a>						
 								</li>
 							</ul>
 						</div>

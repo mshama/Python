@@ -112,6 +112,14 @@ select, input, textarea {
 	text-align:center;
 }
 
+#field-parameters-div {
+	width:auto;
+	margin: auto;
+
+	padding:15px;
+	text-align:left;
+}
+
 .mappings-table-row td, .mappings-table-row th {
      border-bottom: 1px solid black !important;
      padding: 5px 32px;

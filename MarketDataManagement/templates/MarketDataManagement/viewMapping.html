@@ -1,8 +1,7 @@
 {% extends 'home/base.html' %}
 {% block body_block %}
 	{% include 'MarketDataManagement/includes.html' %}
-	{% include 'MarketDataManagement/newDatasourceField.html' %}	
-	{% include 'MarketDataManagement/newGoldenRecordField.html' %}
+	{% include 'MarketDataManagement/newDBField.html' %}
 	{% include 'MarketDataManagement/newMarketDataType.html' %}
 	{% include 'MarketDataManagement/addMapping.html' %}
 	
@@ -10,6 +9,7 @@
 		<tr class="mappings-table-row">
 			<th>Golden record field</th>
 			<th>Datasource field</th>
+			<th>Datasource</th>
 			<th>Market data type</th>
 			<th>Valid from</th>
 			<th>Valid to</th>
@@ -19,6 +19,7 @@
 		<tr class="mappings-table-row">
 			<td>{{ mapping.goldenrecord_field.name_c }}</td>
 			<td>{{ mapping.datasource_field.name_c }}</td>
+			<td>{{ mapping.datasource_field.data_source_c }}</td>
 			<td>{{ mapping.marketdatatype.name_c }}</td>
 			<td>{{ mapping.valid_from_d }}</td>
 			<td>{{ mapping.valid_to_d|default_if_none:"" }}</td>
@@ -47,9 +48,7 @@
 	<br />
 	<a href="#" onclick='overlayClick("fieldMapping-overlay")'>New Mapping</a>
 	<br />
-	<a href="#" onclick='overlayClick("goldenrecordfield-overlay")'>New golden record field</a>
-	<br />
-	<a href="#" onclick='overlayClick("datasourcefield-overlay")'>New data source field</a>
+	<a href="#" onclick='overlayClick("dbfield-overlay")'>New database field</a>
 	<br />
 	<a href="#" onclick='overlayClick("marketdatatype-overlay")'>New market data type</a>
 {% endblock %}
