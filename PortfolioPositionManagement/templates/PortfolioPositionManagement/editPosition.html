@@ -5,7 +5,7 @@
 	Parent Investment: {{ position.parent_investment }} <br><br>
 	Investment: {{ position.investment }} <br><br>
 	
-	<form method='POST' action="{% url 'PortfolioPositionManagement:editPosition' position.id%}" name='positionEditForm'>
+	<form method='POST' action="{% url 'PortfolioPositionManagement:editPosition' position.id %}" name='positionEditForm'>
 		{% csrf_token %}
 		
 		{{ editForm.as_p }}

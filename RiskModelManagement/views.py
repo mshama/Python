@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from RiskModelManagement.models import Riskfactor, Riskfactor_Mapping,\
     RiskfactorComposition
 from InstrumentDataManagement.models import Instrument, Marketdatatype
-from PortfolioPositionManagement.models import Mandate
+from PortfolioPositionManagement.models import Portfolio
 from django.core.exceptions import ObjectDoesNotExist
 
 # Create your views here.
@@ -25,11 +25,11 @@ def editRiskfactorMapping(request, riskfactor_id=None):
                 
         for instrument_id in request.POST.getlist('instrument_mapping_list[]'):
             reference_instrument = Instrument.objects.get(pk=instrument_id)
-            mandate = Mandate.objects.get(pk=request.POST['mandate'])
+            portfolio = Portfolio.objects.get(pk=request.POST['portfolio'])
             Riskfactor_Mapping(
                                reference_instrument=reference_instrument,
                                riskfactor=parent_riskfactor,
-                               mandate=mandate,
+                               portfolio=portfolio,
                                ).save()
     return redirect('RiskModelManagement:viewRiskfactor', riskfactor_id=riskfactor_id)
 
@@ -104,14 +104,14 @@ def viewRiskfactor(request, riskfactor_id=None):
     mapping_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Equity','Fixed_Income','Derivative']).order_by('name_c')
     index_list = Instrument.objects.filter(marketdatatype__type_c__in=['Index','Currency'])
     riskfactors = Riskfactor.objects.all()
-    mandates = Mandate.objects.all()
+    portfolios = Portfolio.objects.all()
     
     context = {                 
                'mapping_instrument_list': mapping_instrument_list,
                'hedge_instrument_list': hedge_instrument_list,
                'index_list': index_list,
                'riskfactors': riskfactors,
-               'mandates': mandates,
+               'portfolios': portfolios,
                
                'riskfactor': riskfactor,
                'riskfactor_mapping': riskfactor_mapping,
@@ -125,14 +125,14 @@ def addRiskfactor(request):
         mapping_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Equity','Fixed_Income','Derivative']).order_by('name_c')
         index_list = Instrument.objects.filter(marketdatatype__type_c__in=['Index','Currency'])
         riskfactors = Riskfactor.objects.all()
-        mandates = Mandate.objects.all()
+        portfolios = Portfolio.objects.all()
         
         context = {
                    'mapping_instrument_list': mapping_instrument_list,
                    'hedge_instrument_list': hedge_instrument_list,
                    'index_list': index_list,
                    'riskfactors': riskfactors,
-                   'mandates': mandates,
+                   'portfolios': portfolios,
                 }
         return render(request, 'RiskModelManagement/addRiskfactor.html', context)
     elif request.method == 'POST':
@@ -161,11 +161,11 @@ def addRiskfactor(request):
         if ('has_mapping' in request.POST) and request.POST['instrument_mapping_list[]']:
             for instrument_id in request.POST.getlist('instrument_mapping_list[]'):
                 reference_instrument = Instrument.objects.get(pk=instrument_id)
-                mandate = Mandate.objects.get(pk=request.POST['mandate'])
+                portfolio = Portfolio.objects.get(pk=request.POST['mandate'])
                 Riskfactor_Mapping(
                                    reference_instrument=reference_instrument,
                                    riskfactor=parent_riskfactor,
-                                   mandate=mandate,
+                                   portfolio=portfolio,
                                    ).save()
         
         successMessage = 'Risk factor is saved successfully'
@@ -174,7 +174,7 @@ def addRiskfactor(request):
         mapping_instrument_list = Instrument.objects.filter(marketdatatype__type_c__in=['Equity','Fixed_Income','Derivative'])
         index_list = Instrument.objects.filter(marketdatatype__type_c__in=['Index','Currency'])
         riskfactors = Riskfactor.objects.all()
-        mandates = Mandate.objects.all()
+        portfolios = Portfolio.objects.all()
         
         context = { 
                    'successMessage': successMessage,                  

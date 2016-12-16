@@ -68,11 +68,13 @@ def get_instrument(ticker, marketdatatype, market=None, currency=None):
                     pass
     return None, None
 
-def load_instrument_with_id(instrument_id):
+def load_instrument_with_id(instrument_id, date_list=[], isrange=False):
     '''
     loads the instrument from database given its id and returns its price data
     
     @param instrument_id: database id of the instrument
+    @param date_list: a list of dates or date range in string format YYYY-MM-DD
+    @param isrange: marks the given data_list as a range so that we only use the first and second element of the list 
     
     @return: returns a list of dictionaries containing price data
     '''
@@ -81,20 +83,43 @@ def load_instrument_with_id(instrument_id):
     
     marketdatatype = Instrument.objects.get(pk=instrument_id).marketdatatype.type_c
     current_instrument_data = {'instrumentName': Instrument.objects.get(pk=instrument_id).name_c}
+    
     if marketdatatype == 'Equity':
-        current_instrument_data['priceData'] = load_equity_instrument(instrument_id)
+        price_table = eval('MarketData_Equity_VW')
     elif marketdatatype == 'Fixed_Income':
-        current_instrument_data['priceData'] = load_fixed_income_instrument(instrument_id)
+        price_table = eval('MarketData_Fixed_Income_VW')
     elif marketdatatype == 'InterestRate':
-        current_instrument_data['priceData'] = load_interestrate_instrument(instrument_id)
+        price_table = eval('MarketData_InterestRate_VW')
     elif marketdatatype == 'Derivative':
-        current_instrument_data['priceData'] = load_derivative_instrument(instrument_id)
+        price_table = eval('MarketData_Derivative_VW')
     elif marketdatatype == 'Index':
-        current_instrument_data['priceData'] = load_index_instrument(instrument_id)
+        price_table = eval('MarketData_Index_VW')
     elif marketdatatype == 'Currency':
-        current_instrument_data['priceData'] = load_currency_instrument(instrument_id)
-    instrumentData.append(current_instrument_data)
+        price_table = eval('MarketData_Currency_VW')
         
+    if len(date_list) > 0:
+        if isrange:
+            price_data = price_table.objects.filter(
+                                                    instrument__id=instrument_id, 
+                                                    date__gte=date_list[0],
+                                                    date__lte=date_list[1],
+                                                    ).values().order_by('date')
+            
+        else:
+            price_data = price_table.objects.filter(
+                                                    instrument__id=instrument_id, 
+                                                    date__in=date_list,
+                                                    ).values().order_by('date')
+    else:
+        price_data = price_table.objects.filter(
+                                                instrument__id=instrument_id,
+                                                ).values().order_by('date')
+    price_data = pd.DataFrame(list(price_data))
+    del price_data['instrument_id']
+    current_instrument_data['priceData'] = price_data
+    
+    instrumentData.append(current_instrument_data)
+
     return instrumentData
 
 def load_instrument(instrument):

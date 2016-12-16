@@ -2,6 +2,7 @@
 {% block body_block %}
 	{% load staticfiles %}
 	{% include 'RiskModelManagement/includes.html' %}
+	<script type="text/javascript"  src="{% static 'RiskModelManagement/js/addTransaction.js' %}"></script>
 	{% if successMessage %}
 		<div class="successMessages">{{ successMessage | default_if_none:"" }}</div>
 	{% endif %}
@@ -98,12 +99,12 @@
 				</tr>
 				<tr>
 					<th style="text-align:left">
-						Choose Mandate
+						Choose portfolio
 					</th>
 					<td style="text-align:left">
-						<select name='mandate'>
-							{% for mandate in mandates %}
-							<option value="{{ mandate.id }}">{{ mandate.name_c }}</option>
+						<select name='portfolio'>
+							{% for portfolio in portfolios %}
+							<option value="{{ portfolio.id }}">{{ portfolio.name_c }}</option>
 							{% endfor %}
 						</select>
 					</td>

@@ -1,8 +1,10 @@
 {% extends 'home/base.html' %}
 {% block body_block %}
+	{% load staticfiles %}
 	{% include 'PortfolioPositionManagement/includes.html' %}
-	<table style="width: 90%;margin-left: auto;margin-right: auto;text-align:left" border=1 id="list-table">
+	<table style="border-collapse: collapse; width: 90%;margin-left: auto;margin-right: auto;text-align:left" border=1 id="list-table">
 		<tr>
+			<th> </th>
 			<th>Parent investment</th>
 			<th>Investment</th>
 			<th>Currency</th>
@@ -13,7 +15,7 @@
 			<th>Exchangerate</th>
 			<th>Volume EUR</th>
 			<th>Volume Foreign Currency</th>
-			<th>TradeData</th>
+			<th>Trade Date</th>
 			<th>Value Date</th>
 			<th>Create Date</th>
 			<th>Create User</th>
@@ -23,6 +25,16 @@
 		</tr>
 		{% for transaction in transactions %}
 		<tr>
+			<td >
+				<a href="{% url 'PortfolioPositionManagement:editTransaction' transaction.id %}" style="text-decoration:none">
+					<img src="{% static 'home/images/edit.png' %}"/>
+				</a>
+				|
+				<a href="{% url 'PortfolioPositionManagement:deleteTransaction' transaction.id %}" style="text-decoration:none">
+					<img src="{% static 'home/images/delete.png' %}"/>
+				</a>
+				
+			</td>
 			<td>{{ transaction.parent_investment }}</td>
 			<td>{{ transaction.investment }}</td>
 			<td>{{ transaction.currency }}</td>

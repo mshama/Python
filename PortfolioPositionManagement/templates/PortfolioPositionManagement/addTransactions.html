@@ -1,10 +1,48 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="ISO-8859-1">
-<title>Insert title here</title>
-</head>
-<body>
-
-</body>
-</html>
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% load staticfiles %}
+	{% include 'PortfolioPositionManagement/includes.html' %}
+	<script type="text/javascript"  src="{% static 'PortfolioPositionManagement/js/addTransaction.js' %}"></script>
+	
+	<form method="POST" action="{% url 'PortfolioPositionManagement:addTransactions' %}">
+		{% csrf_token %}
+		<table style="width: 90%;margin-left: auto;margin-right: auto;text-align:left; border-collapse: collapse;" border=1>
+			<thead>
+				<tr>
+					<th>Parent Investment</th>
+					<th>Investment</th>
+					<th>Type</th>
+					<th>Status</th>
+					<th>Quantity</th>
+					<th>Price</th>
+					<th>Currency</th>
+					<th>Exchange rate</th>
+					<th>Trade date</th>
+					<th>Value date</th>
+					<th>Data source</th>
+				</tr>
+			</thead>
+			<tbody>
+			{{ transaction_formset.management_form }}
+			{% for form in transaction_formset %}
+				<tr class='transaction' id="{{ form.prefix }}">
+				{% for field in form %}
+				    <td>{{ field }}</td>
+				{% endfor %}					
+					<td>
+						<a class="delete" href="#" style="text-decoration:none">
+							<img src="{% static 'home/images/delete.png' %}"/>
+						</a>
+					</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		<br><br>
+		<a id="add" href="#" style="text-decoration:none">
+			<img src="{% static 'home/images/add.png' %}"/>
+		</a>
+		<br><br>
+		<input type="submit" value="Save transactions" class="submit-button"/>
+	</form>
+{% endblock %}

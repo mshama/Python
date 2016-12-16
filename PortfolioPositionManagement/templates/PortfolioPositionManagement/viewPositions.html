@@ -24,11 +24,11 @@
 		{% for position in positions %}
 		<tr>
 			<td >
-				<a href="{% url 'PortfolioPositionManagement:editPosition' position.id %}">
+				<a href="{% url 'PortfolioPositionManagement:editPosition' position.id %}" style="text-decoration:none">
 					<img src="{% static 'home/images/edit.png' %}"/>
 				</a>
 				|
-				<a href="{% url 'PortfolioPositionManagement:deletePosition' position.id %}">
+				<a href="{% url 'PortfolioPositionManagement:deletePosition' position.id %}" style="text-decoration:none">
 					<img src="{% static 'home/images/delete.png' %}"/>
 				</a>
 				

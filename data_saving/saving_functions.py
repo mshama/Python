@@ -33,7 +33,7 @@ from InstrumentDataManagement.models import Marketdatatype, Instrumentsynonym, I
                                             Country, Bond, Market, Codification
 from PortfolioPositionManagement.models import Transaction, Portfolio, Position,\
     Investment
-from RiskModelManagement.models import Riskrawdata    
+from RiskModelManagement.models import Riskrawdata,Sensitivity_C   
 
 from dataconnections.datasource import get_metaData, get_bond_metaData, get_metaData_ISIN
 

@@ -15,8 +15,6 @@ class Mandate(models.Model):
     class Meta:
         managed = False
         db_table = 'Mandate'
-
-from RiskModelManagement.models import RiskModel
         
 class Portfolio(models.Model):
     id = models.AutoField(db_column='ID', primary_key=True)
@@ -26,7 +24,7 @@ class Portfolio(models.Model):
     create_d = models.DateField(db_column='Create_D')
     last_modf_user = models.ForeignKey(User, models.DO_NOTHING, db_column='Last_Modf_User_ID', related_name='last_modf_user', blank=True, null=True)
     last_modf_d = models.DateField(db_column='Last_Modf_D', blank=True, null=True)
-    primary_riskmodel = models.ForeignKey(RiskModel, models.DO_NOTHING, db_column='Primary_Riskmodel_ID')
+    primary_riskmodel = models.ForeignKey('RiskModelManagement.RiskModel', models.DO_NOTHING, db_column='Primary_Riskmodel_ID')
     
     def __str__(self):
         return self.name_c
@@ -119,7 +117,7 @@ class Transaction(models.Model):
     quantity_n = models.DecimalField(db_column='Quantity_N', max_digits=30, decimal_places=10, blank=True, null=True)
     price_n = models.DecimalField(db_column='Price_N', max_digits=18, decimal_places=2)
     exchangerate_n = models.DecimalField(db_column='ExchangeRate_N', max_digits=10, decimal_places=4)
-    volumne_eur_n = models.DecimalField(db_column='Volume_EUR_N', max_digits=18, decimal_places=2, blank=True, null=True)
+    volume_eur_n = models.DecimalField(db_column='Volume_EUR_N', max_digits=18, decimal_places=2, blank=True, null=True)
     volume_fc_n = models.DecimalField(db_column='Volume_FC_N', max_digits=18, decimal_places=2, blank=True, null=True)
     tradedate_d = models.DateField(db_column='TradeDate_D')
     valuedate_d = models.DateField(db_column='ValueDate_D', blank=True, null=True)

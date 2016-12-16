@@ -19,12 +19,12 @@
 				</tr>
 				<tr>
 					<th style="text-align:left">
-						Choose Mandate
+						Choose Portfolio
 					</th>
 					<td style="text-align:left">
-						<select name='mandate'>
-							{% for mandate in mandates %}
-							<option value="{{ mandate.id }}">{{ mandate.name_c }}</option>
+						<select name='portfolio'>
+							{% for portfolio in portfolios %}
+							<option value="{{ portfolio.id }}">{{ portfolio.name_c }}</option>
 							{% endfor %}
 						</select>
 					</td>

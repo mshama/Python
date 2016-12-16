@@ -1,0 +1,17 @@
+{% extends 'home/base.html' %}
+{% block body_block %}
+	{% include 'PortfolioPositionManagement/includes.html' %}
+	
+	Parent Investment: {{ transaction.parent_investment }} <br><br>
+	Investment: {{ transaction.investment }} <br><br>
+	
+	<form method='POST' action="{% url 'PortfolioPositionManagement:editTransaction' transaction.id %}" name='transactionEditForm'>
+		{% csrf_token %}
+
+		{{ editForm.as_p }}
+
+		<input name="editPosition" type="submit" value="Save changes" class="submit-button"/>
+	</form>
+
+	
+{% endblock %}

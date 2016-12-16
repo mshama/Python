@@ -4,6 +4,7 @@ from django.shortcuts import render
 
 
 def mainCalculations_QELV(request):
+    return None
     pass
 
 

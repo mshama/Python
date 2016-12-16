@@ -36,6 +36,7 @@ class User(models.Model):
     firstname_c = models.CharField(db_column='FirstName_C', max_length=50)
     lastname_c = models.CharField(db_column='LastName_C', max_length=50)
     windows_login_c = models.CharField(db_column='Windows_Login_C', max_length=50)
+    groups = models.ManyToManyField(Group, through='User_Group')
     
     def __str__(self):
         return self.lastname_c + ',' + self.firstname_c
@@ -48,7 +49,6 @@ class User(models.Model):
         db_table = 'User'
         
 class User_Group(models.Model):
-    id = models.AutoField(db_column='ID', primary_key=True)
     user = models.ForeignKey(User, models.DO_NOTHING, db_column='User_ID')
     group = models.ForeignKey(Group, models.DO_NOTHING, db_column='Group_ID')
     
@@ -57,5 +57,5 @@ class User_Group(models.Model):
     
     class Meta:
         managed = False
-        db_table = 'User_Group'
+        db_table = 'User_Group_Mapping'
         unique_together = (('user', 'group',),)

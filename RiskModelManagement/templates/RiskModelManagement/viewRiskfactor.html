@@ -62,7 +62,7 @@
 	<div id='mapping-data'>
 		<table>
 			<tr>
-				<th style="text-align:left">Mandate</th>
+				<th style="text-align:left">Portfolio</th>
 				<th style="text-align:right">Instrument</th>
 				<td style="text-align:right">
 					<a href="#" onclick="overlayClick('edit-mapping-overlay')">
@@ -73,7 +73,7 @@
 		{% for mapping_element in riskfactor_mapping %}
 			<tr>
 				<td style="text-align:left">
-					{{ mapping_element.mandate }}
+					{{ mapping_element.portfolio }}
 				</td>
 				<td style="text-align:right">
 					{{ mapping_element.reference_instrument }}
